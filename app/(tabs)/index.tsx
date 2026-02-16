@@ -1,98 +1,472 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { ChevronRight, Megaphone } from 'lucide-react-native';
+import React, { useEffect } from 'react';
+import {
+  Animated,
+  Dimensions,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View
+} from 'react-native';
+import { Card } from '../../components/ui/Card';
+import { Colors } from '../../constants/theme';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useDataStore } from '../../store/useDataStore';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const user = useAuthStore(state => state.user);
+  const { events, myRegistrations, notifications, fetchEvents, isEventsLoading } = useDataStore();
+  const [selectedCategory, setSelectedCategory] = React.useState('All');
+  const [filteredEvents, setFilteredEvents] = React.useState(events);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const router = useRouter();
+  const theme = useColorScheme() ?? 'light';
+  const colors = Colors[theme];
+
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const moveAnim = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    fetchEvents();
+
+    // Header Animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(moveAnim, {
+            toValue: 1,
+            duration: 4000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(moveAnim, {
+            toValue: 0,
+            duration: 4000,
+            useNativeDriver: true,
+          })
+        ])
+      )
+    ]).start();
+  }, []);
+
+  useEffect(() => {
+    let filtered = [...events];
+
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(e => {
+        if (selectedCategory === 'Technical') return e.club.toLowerCase().includes('coding') || e.club.toLowerCase().includes('tech');
+        if (selectedCategory === 'Cultural') return e.club.toLowerCase().includes('dance') || e.club.toLowerCase().includes('music') || e.club.toLowerCase().includes('drama');
+        if (selectedCategory === 'Sports') return e.club.toLowerCase().includes('sports') || e.club.toLowerCase().includes('cricket');
+        if (selectedCategory === 'Today') {
+          const today = new Date().toISOString().split('T')[0];
+          return e.date.startsWith(today);
+        }
+        if (selectedCategory === 'This Week') {
+          const nextWeek = new Date();
+          nextWeek.setDate(nextWeek.getDate() + 7);
+          const eventDate = new Date(e.date);
+          return eventDate >= new Date() && eventDate <= nextWeek;
+        }
+        return true;
+      });
+    }
+
+    setFilteredEvents(filtered);
+  }, [events, selectedCategory]);
+
+  const popularEvents = [...events].sort((a, b) => (b.registeredCount || 0) - (a.registeredCount || 0)).slice(0, 3);
+  const categories = ['All', 'Today', 'This Week', 'Technical', 'Cultural', 'Sports'];
+
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      refreshControl={
+        <RefreshControl refreshing={isEventsLoading} onRefresh={fetchEvents} tintColor={colors.primary} />
+      }
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Animated Gradient Header */}
+      <LinearGradient
+        colors={colors.headerGradient as any}
+        style={styles.header}
+      >
+        {/* Animated Background Elements */}
+        <Animated.View style={[
+          styles.headerBgCircle,
+          {
+            opacity: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.15] }),
+            transform: [{
+              translateX: moveAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 20] })
+            }]
+          }
+        ]} />
+        <Animated.View style={[
+          styles.headerBgCircleSmall,
+          {
+            opacity: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.1] }),
+            transform: [{
+              translateY: moveAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 30] })
+            }]
+          }
+        ]} />
+
+        <View style={styles.headerTop}>
+          <View>
+            <Animated.Text style={[styles.welcomeText, { opacity: fadeAnim }]}>Welcome Back!</Animated.Text>
+            <Animated.Text style={[styles.subWelcomeText, { opacity: fadeAnim }]}>Discover amazing events</Animated.Text>
+          </View>
+        </View>
+
+        {/* Quick Stats Row */}
+        <Animated.View style={[styles.statsRow, { opacity: fadeAnim }]}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{events.filter(e => e.status === 'Open').length}</Text>
+            <Text style={styles.statLabel}>Active</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{myRegistrations.filter(r => new Date(r.event.date) >= new Date()).length}</Text>
+            <Text style={styles.statLabel}>Registered</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{myRegistrations.filter(r => new Date(r.event.date) < new Date()).length}</Text>
+            <Text style={styles.statLabel}>Completed</Text>
+          </View>
+        </Animated.View>
+
+        {/* Categories Chips */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
+          {categories.map((cat, idx) => (
+            <Pressable
+              key={cat}
+              onPress={() => setSelectedCategory(cat)}
+              style={({ pressed }) => [
+                styles.categoryChip,
+                {
+                  backgroundColor: selectedCategory === cat ? '#fff' : 'rgba(255,255,255,0.2)'
+                },
+                { transform: [{ scale: pressed ? 0.95 : 1 }] }
+              ]}
+            >
+              <Text style={[
+                styles.categoryText,
+                { color: selectedCategory === cat ? colors.primary : '#fff' }
+              ]}>{cat}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </LinearGradient>
+
+      <View style={[styles.content, { backgroundColor: colors.background }]}>
+        {/* Announcement Card */}
+        <View style={[styles.announcementCard, { backgroundColor: colors.announcementBg, borderColor: colors.announcementBorder }]}>
+          <View style={styles.announcementIcon}>
+            <Megaphone size={20} color="#fff" />
+          </View>
+          <View style={styles.announcementTextContent}>
+            <Text style={[styles.announcementTitle, { color: colors.text }]}>Latest Announcement</Text>
+            <Text style={[styles.announcementBody, { color: colors.textMuted }]}>
+              Limited seats available for the upcoming AI & Machine Learning session. Register now!
+            </Text>
+            <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+              <Text style={[styles.announcementLink, { color: colors.primary }]}>View All Announcements</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Popular Events */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular Events</Text>
+          <Pressable
+            onPress={() => router.push('/(tabs)/events')}
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+          >
+            <Text style={[styles.seeAll, { color: colors.primary }]}>See All</Text>
+          </Pressable>
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredList}>
+          {popularEvents.map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => router.push(`/event/${item.id}`)}
+              style={({ pressed }) => [
+                styles.featuredCard,
+                { transform: [{ scale: pressed ? 0.98 : 1 }] }
+              ]}
+            >
+              <Image source={{ uri: item.poster }} style={styles.featuredImage} />
+              <View style={styles.badgeContainer}>
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.badgeText}>Technical</Text>
+                </View>
+                <View style={[styles.statusTag, { backgroundColor: colors.secondary }]}>
+                  <Text style={styles.statusTagText}>Soon</Text>
+                </View>
+              </View>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Upcoming Deadlines</Text>
+            <Pressable
+              onPress={() => router.push('/(tabs)/events')}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+            >
+              <Text style={{ color: colors.primary }}>View All</Text>
+            </Pressable>
+          </View>
+          {filteredEvents.length > 0 ? (
+            filteredEvents.slice(0, 5).map((event) => (
+              <Card key={event.id} style={styles.deadlineCard} onPress={() => router.push(`/event/${event.id}`)}>
+                <View style={styles.deadlineInfo}>
+                  <Text style={[styles.deadlineName, { color: colors.text }]}>{event.name}</Text>
+                  <Text style={[styles.deadlineDate, { color: colors.error }]}>
+                    {Math.max(0, Math.ceil((new Date(event.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))} days left
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </Card>
+            ))
+          ) : (
+            <View style={styles.noResults}>
+              <Text style={{ color: colors.textMuted }}>No events match your criteria</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={{ height: 40 }} />
+      </View>
+    </ScrollView >
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
+  header: {
+    paddingTop: 60,
+    paddingBottom: 30,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerBgCircle: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#fff',
+  },
+  headerBgCircleSmall: {
+    position: 'absolute',
+    bottom: 10,
+    left: -20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#fff',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginBottom: 24,
+  },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  subWelcomeText: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginHorizontal: 24,
+    marginBottom: 24,
+    borderRadius: 20,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  categoryScroll: {
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+  categoryChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+  },
+  categoryText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  content: {
+    marginTop: -20,
+    paddingTop: 30,
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+  },
+  announcementCard: {
+    marginHorizontal: 24,
+    marginBottom: 32,
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: 'row',
+    borderWidth: 1,
+  },
+  announcementIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f97316',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  announcementTextContent: {
+    flex: 1,
+  },
+  announcementTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  announcementBody: {
+    fontSize: 14,
+    lineHeight: 20,
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  announcementLink: {
+    fontSize: 14,
+    fontWeight: '600',
   },
+  section: {
+    marginTop: 32,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 24,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  seeAll: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  featuredList: {
+    paddingLeft: 24,
+    gap: 20,
+  },
+  featuredCard: {
+    width: width - 80,
+    height: 180,
+    borderRadius: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  featuredImage: {
+    width: '100%',
+    height: '100%',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  categoryBadge: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#334155',
+  },
+  statusTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  statusTagText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  deadlineCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 24,
+    marginBottom: 12,
+    padding: 16,
+  },
+  deadlineInfo: {
+    flex: 1,
+  },
+  deadlineName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  deadlineDate: {
+    fontSize: 12,
+  },
+  noResults: {
+    alignItems: 'center',
+    padding: 30,
+  }
 });

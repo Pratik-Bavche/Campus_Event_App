@@ -1,0 +1,207 @@
+import { Bell, CheckCircle2, Clock, Info } from 'lucide-react-native';
+import React, { useEffect } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    useColorScheme,
+    View
+} from 'react-native';
+import { Colors } from '../../constants/theme';
+import { useDataStore } from '../../store/useDataStore';
+
+export default function NotificationsScreen() {
+    const { notifications, fetchNotifications, markNotificationAsRead, isNotificationsLoading } = useDataStore();
+    const theme = useColorScheme() ?? 'light';
+    const colors = Colors[theme];
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const getIcon = (type: string, isRead: boolean) => {
+        switch (type) {
+            case 'confirmation':
+                return (
+                    <View style={[styles.iconCircle, { backgroundColor: colors.success + '15' }]}>
+                        <CheckCircle2 size={24} color={colors.success} />
+                    </View>
+                );
+            case 'update':
+                return (
+                    <View style={[styles.iconCircle, { backgroundColor: '#fff7ed' }]}>
+                        <Clock size={24} color="#f97316" />
+                    </View>
+                );
+            default:
+                return (
+                    <View style={[styles.iconCircle, { backgroundColor: colors.primary + '15' }]}>
+                        <Info size={24} color={colors.primary} />
+                    </View>
+                );
+        }
+    };
+
+    const renderNotificationItem = ({ item }: { item: any }) => (
+        <Pressable
+            onPress={() => markNotificationAsRead(item.id)}
+            style={({ pressed }) => [
+                styles.notificationItem,
+                {
+                    backgroundColor: '#ffffff',
+                    borderColor: item.isRead ? colors.border : colors.primary,
+                },
+                { transform: [{ scale: pressed ? 0.98 : 1 }] }
+            ]}
+        >
+            <View style={styles.notificationLeft}>
+                {getIcon(item.type, item.isRead)}
+                <View style={styles.textContent}>
+                    <Text style={[
+                        styles.notificationTitle,
+                        { color: colors.text }
+                    ]}>
+                        {item.title}
+                    </Text>
+                    <Text style={[styles.notificationMessage, { color: colors.textMuted }]}>
+                        {item.message}
+                    </Text>
+                    <Text style={[styles.notificationDate, { color: colors.textMuted }]}>
+                        642d ago
+                    </Text>
+                </View>
+            </View>
+            {!item.isRead && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
+        </Pressable>
+    );
+
+    return (
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={styles.header}>
+                <Text style={[styles.title, { color: colors.text }]}>Notifications</Text>
+                <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+                    <Text style={[styles.markRead, { color: colors.primary }]}>Mark all as read</Text>
+                </Pressable>
+            </View>
+
+            <Text style={[styles.unreadCount, { color: colors.textMuted }]}>
+                {notifications.filter(n => !n.isRead).length} unread notifications
+            </Text>
+
+            {isNotificationsLoading ? (
+                <View style={styles.center}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+            ) : (
+                <FlatList
+                    data={notifications}
+                    renderItem={renderNotificationItem}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={
+                        <View style={styles.emptyState}>
+                            <Bell size={48} color={colors.border} />
+                            <Text style={[styles.emptyText, { color: colors.textMuted }]}>No notifications yet</Text>
+                        </View>
+                    }
+                />
+            )}
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        paddingTop: 60,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        marginBottom: 8,
+    },
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+    },
+    markRead: {
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    unreadCount: {
+        fontSize: 14,
+        paddingHorizontal: 24,
+        marginBottom: 20,
+    },
+    listContent: {
+        paddingHorizontal: 24,
+        paddingBottom: 24,
+    },
+    notificationItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 20,
+        borderRadius: 20,
+        borderWidth: 1,
+        marginBottom: 16,
+        alignItems: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+    },
+    notificationLeft: {
+        flexDirection: 'row',
+        flex: 1,
+        gap: 16,
+        alignItems: 'flex-start',
+    },
+    iconCircle: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    textContent: {
+        flex: 1,
+    },
+    notificationTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    notificationMessage: {
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 8,
+    },
+    notificationDate: {
+        fontSize: 12,
+    },
+    unreadDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        marginLeft: 12,
+    },
+    center: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyState: {
+        alignItems: 'center',
+        marginTop: 100,
+        gap: 12,
+    },
+    emptyText: {
+        fontSize: 16,
+    }
+});

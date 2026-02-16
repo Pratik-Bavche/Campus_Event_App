@@ -1,50 +1,69 @@
-# Welcome to your Expo app 👋
+# Student Event Registration App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A production-ready mobile application built with React Native and Expo for college students to register for campus events.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Authentication**: Secure login and sign-up with college email and roll number.
+- **Event Discovery**: Browse featured events on the home screen or search all events.
+- **Detailed Event Info**: View descriptions, rules, venues, and deadlines.
+- **Registration Flow**: 
+  - Individual registration.
+  - Group registration (Create or Join via code).
+- **Manage Registrations**: Keep track of registered events and their status.
+- **Notifications**: Stay updated with new events and registration confirmations.
+- **Premium UI**: Modern design with dark/light mode support, smooth transitions, and rich visuals.
 
+## Tech Stack
+
+- **Framework**: React Native with Expo
+- **Navigation**: Expo Router (File-based routing)
+- **State Management**: Zustand
+- **API Calls**: Axios with mock data support
+- **Storage**: Expo Secure Store (for auth tokens)
+- **Icons**: Lucide React Native
+- **Styling**: React Native StyleSheet + Expo Linear Gradient
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js
+- npm or yarn
+- Expo Go app on your physical device or an emulator
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
    ```bash
    npm install
    ```
-
-2. Start the app
-
+3. Start the development server:
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## Project Structure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- `app/`: Expo Router screens and layouts.
+  - `(auth)/`: Authentication screens (Login, Sign Up).
+  - `(tabs)/`: Tab-based navigation screens.
+  - `event/[id].tsx`: Event detail view.
+  - `register/[id].tsx`: Multi-step registration flow.
+- `components/`: Reusable UI components (Button, Input, Card).
+- `constants/`: Theme colors and configuration.
+- `services/`: API services and mock data.
+- `store/`: Zustand state management.
+- `types/`: TypeScript interfaces.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Environment Variables
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+Create a `.env` file (or set in `constants/Config.ts`):
+```
+EXPO_PUBLIC_API_URL=https://your-api-url.com
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Mock Data
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The app is currently configured to use mock data for development. To switch to a real API, toggle `IS_DEVELOPMENT` in `constants/Config.ts`.
