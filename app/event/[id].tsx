@@ -1,9 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Calendar, Clock, Info, MapPin, Share2, Users } from 'lucide-react-native';
+import { ArrowLeft, Award, Calendar, Clock, Info, MapPin, Share2, Users } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Dimensions,
     Image,
     Platform,
@@ -44,6 +45,14 @@ export default function EventDetailsScreen() {
         };
         fetchEvent();
     }, [id]);
+
+    const handleDownloadCertificate = () => {
+        Alert.alert(
+            'Download Certificate',
+            `Your certificate for ${event?.name} is being generated and will be downloaded shortly.`,
+            [{ text: 'OK' }]
+        );
+    };
 
     if (isLoading) {
         return (
@@ -178,12 +187,21 @@ export default function EventDetailsScreen() {
             </ScrollView>
 
             <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-                <Button
-                    title={isDeadlinePassed ? "Registration Closed" : "Register Now"}
-                    disabled={!canRegister}
-                    onPress={() => router.push(`/register/${event.id}`)}
-                    style={styles.registerButton}
-                />
+                {new Date(event.date) <= new Date() ? (
+                    <Button
+                        title="Download Certificate"
+                        onPress={handleDownloadCertificate}
+                        style={{ ...styles.registerButton, backgroundColor: '#10b981' }}
+                        icon={<Award size={20} color="#fff" />}
+                    />
+                ) : (
+                    <Button
+                        title={isDeadlinePassed ? "Registration Closed" : "Register Now"}
+                        disabled={!canRegister}
+                        onPress={() => router.push(`/register/${event.id}`)}
+                        style={styles.registerButton}
+                    />
+                )}
             </View>
         </View>
     );

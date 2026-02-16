@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, Clock } from 'lucide-react-native';
+import { Award, Calendar, Clock } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -42,6 +42,14 @@ export default function RegistrationsScreen() {
         if (selectedTab === 'Cancelled') return reg.status === 'cancelled';
         return true;
     });
+
+    const handleDownloadCertificate = (eventName: string) => {
+        Alert.alert(
+            'Download Certificate',
+            `Your certificate for ${eventName} is being generated and will be downloaded shortly.`,
+            [{ text: 'OK' }]
+        );
+    };
 
     const handleCancel = (registrationId: string, eventName: string) => {
         Alert.alert(
@@ -134,16 +142,33 @@ export default function RegistrationsScreen() {
                         )}
 
                         {(isCancelled || isCompleted) && (
-                            <Pressable
-                                style={({ pressed }) => [
-                                    styles.actionButton,
-                                    { backgroundColor: colors.primary + '10', width: '100%' },
-                                    { transform: [{ scale: pressed ? 0.98 : 1 }] }
-                                ]}
-                                onPress={() => router.push(`/event/${item.event.id}`)}
-                            >
-                                <Text style={[styles.actionButtonText, { color: colors.primary }]}>View Details</Text>
-                            </Pressable>
+                            <View style={styles.actionRow}>
+                                <Pressable
+                                    style={({ pressed }) => [
+                                        styles.actionButton,
+                                        { backgroundColor: colors.primary + '10' },
+                                        { transform: [{ scale: pressed ? 0.98 : 1 }] }
+                                    ]}
+                                    onPress={() => router.push(`/event/${item.event.id}`)}
+                                >
+                                    <Text style={[styles.actionButtonText, { color: colors.primary }]}>View Details</Text>
+                                </Pressable>
+                                {isCompleted && !isCancelled && (
+                                    <Pressable
+                                        style={({ pressed }) => [
+                                            styles.actionButton,
+                                            { backgroundColor: '#10b98115' },
+                                            { transform: [{ scale: pressed ? 0.98 : 1 }] }
+                                        ]}
+                                        onPress={() => handleDownloadCertificate(item.event.name)}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                            <Award size={14} color="#10b981" />
+                                            <Text style={[styles.actionButtonText, { color: '#10b981' }]}>Certificate</Text>
+                                        </View>
+                                    </Pressable>
+                                )}
+                            </View>
                         )}
                     </View>
                 </View>
