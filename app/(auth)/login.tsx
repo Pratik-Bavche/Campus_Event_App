@@ -151,12 +151,14 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        marginTop: -60,
+        zIndex: 10,
     },
     headerGradient: {
-        height: height * 0.35,
+        height: height * 0.4,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingBottom: 20, // Add some space for the card overlap
+        paddingBottom: 40,
     },
     headerContent: {
         alignItems: 'center',
@@ -199,7 +201,6 @@ const styles = StyleSheet.create({
         borderRadius: 35,
         padding: 28,
         paddingTop: 40,
-        marginTop: -20,
         elevation: 12,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
