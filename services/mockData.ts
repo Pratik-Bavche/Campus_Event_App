@@ -106,15 +106,21 @@ export const mockEvents: Event[] = [
 export const mockAnnouncements: Announcement[] = [
     {
         id: 'a1',
-        title: 'Tech-Nexus Hackathon Registration Open',
-        content: 'Registration is now live for the annual Hackathon! Form your teams and register before March 10th.',
-        date: '2026-02-15T08:00:00Z',
+        title: 'Event Postponed: Tech-Nexus Hackathon',
+        content: 'The Coding Club has postponed the Tech-Nexus Hackathon to March 25th due to lab maintenance. Updated schedule will be sent via email.',
+        date: '2026-02-16T10:00:00Z',
     },
     {
         id: 'a2',
-        title: 'New Event: Sports Meet 2026',
-        content: 'The Annual Sports Meet is scheduled for early March. Registrations closing soon!',
-        date: '2026-02-10T10:00:00Z',
+        title: 'Meeting Cancelled: Robotics Club',
+        content: 'The weekly Robotics Club orientation scheduled for tomorrow has been cancelled. Join us next Wednesday at the same time.',
+        date: '2026-02-16T08:30:00Z',
+    },
+    {
+        id: 'a3',
+        title: 'Venue Change: AI Workshop',
+        content: 'Attention! The Gen-AI workshop venue has been shifted from Seminar Hall 2 to the Main Auditorium to accommodate more students.',
+        date: '2026-02-15T09:00:00Z',
     },
 ];
 

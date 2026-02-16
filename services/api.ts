@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Config } from '../constants/Config';
-import { Event, Notification, Registration, User } from '../types';
-import { mockEvents, mockNotifications, mockRegistrations, mockUser } from './mockData';
+import { Announcement, Event, Notification, Registration, User } from '../types';
+import { mockAnnouncements, mockEvents, mockNotifications, mockRegistrations, mockUser } from './mockData';
 
 // In a real app, this would be your base URL from env
 const API_BASE_URL = Config.API_BASE_URL;
@@ -97,6 +97,17 @@ export const notificationService = {
             return mockNotifications;
         }
         const response = await api.get('/notifications');
+        return response.data;
+    },
+};
+
+export const announcementService = {
+    getAnnouncements: async (): Promise<Announcement[]> => {
+        if (isDevelopment) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return mockAnnouncements;
+        }
+        const response = await api.get('/announcements');
         return response.data;
     },
 };

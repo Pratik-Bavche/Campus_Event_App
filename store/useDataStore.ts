@@ -1,17 +1,20 @@
 import { create } from 'zustand';
-import { eventService, notificationService, registrationService } from '../services/api';
-import { Event, Notification, Registration } from '../types';
+import { announcementService, eventService, notificationService, registrationService } from '../services/api';
+import { Announcement, Event, Notification, Registration } from '../types';
 
 interface DataState {
     events: Event[];
     myRegistrations: Registration[];
     notifications: Notification[];
+    announcements: Announcement[];
     isEventsLoading: boolean;
     isRegistrationsLoading: boolean;
     isNotificationsLoading: boolean;
+    isAnnouncementsLoading: boolean;
     fetchEvents: () => Promise<void>;
     fetchRegistrations: () => Promise<void>;
     fetchNotifications: () => Promise<void>;
+    fetchAnnouncements: () => Promise<void>;
     cancelRegistration: (id: string) => Promise<void>;
     addRegistration: (reg: Registration) => void;
     removeRegistration: (id: string) => void;
@@ -22,9 +25,11 @@ export const useDataStore = create<DataState>((set, get) => ({
     events: [],
     myRegistrations: [],
     notifications: [],
+    announcements: [],
     isEventsLoading: false,
     isRegistrationsLoading: false,
     isNotificationsLoading: false,
+    isAnnouncementsLoading: false,
 
     fetchEvents: async () => {
         set({ isEventsLoading: true });
@@ -56,6 +61,17 @@ export const useDataStore = create<DataState>((set, get) => ({
         } catch (error) {
             set({ isNotificationsLoading: false });
             console.error('Fetch notifications error', error);
+        }
+    },
+
+    fetchAnnouncements: async () => {
+        set({ isAnnouncementsLoading: true });
+        try {
+            const announcements = await announcementService.getAnnouncements();
+            set({ announcements, isAnnouncementsLoading: false });
+        } catch (error) {
+            set({ isAnnouncementsLoading: false });
+            console.error('Fetch announcements error', error);
         }
     },
     cancelRegistration: async (id) => {

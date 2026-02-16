@@ -23,7 +23,7 @@ const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const user = useAuthStore(state => state.user);
-  const { events, myRegistrations, notifications, fetchEvents, isEventsLoading } = useDataStore();
+  const { events, myRegistrations, announcements, fetchEvents, fetchAnnouncements, isEventsLoading } = useDataStore();
   const [selectedCategory, setSelectedCategory] = React.useState('All');
   const [filteredEvents, setFilteredEvents] = React.useState(events);
 
@@ -36,6 +36,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchEvents();
+    fetchAnnouncements();
 
     // Header Animations
     Animated.parallel([
@@ -172,20 +173,39 @@ export default function HomeScreen() {
 
       <View style={[styles.content, { backgroundColor: colors.background }]}>
         {/* Announcement Card */}
-        <View style={[styles.announcementCard, { backgroundColor: colors.announcementBg, borderColor: colors.announcementBorder }]}>
-          <View style={styles.announcementIcon}>
-            <Megaphone size={20} color="#fff" />
+        {announcements.length > 0 && (
+          <View style={[
+            styles.announcementCard,
+            {
+              backgroundColor: announcements[0].title.toLowerCase().includes('cancel') || announcements[0].title.toLowerCase().includes('postpone')
+                ? colors.error + '10'
+                : colors.announcementBg,
+              borderColor: announcements[0].title.toLowerCase().includes('cancel') || announcements[0].title.toLowerCase().includes('postpone')
+                ? colors.error + '30'
+                : colors.announcementBorder
+            }
+          ]}>
+            <View style={[
+              styles.announcementIcon,
+              {
+                backgroundColor: announcements[0].title.toLowerCase().includes('cancel') || announcements[0].title.toLowerCase().includes('postpone')
+                  ? colors.error
+                  : '#f97316'
+              }
+            ]}>
+              <Megaphone size={20} color="#fff" />
+            </View>
+            <View style={styles.announcementTextContent}>
+              <Text style={[styles.announcementTitle, { color: colors.text }]}>{announcements[0].title}</Text>
+              <Text style={[styles.announcementBody, { color: colors.textMuted }]}>
+                {announcements[0].content}
+              </Text>
+              <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
+                <Text style={[styles.announcementLink, { color: colors.primary }]}>View All Announcements</Text>
+              </Pressable>
+            </View>
           </View>
-          <View style={styles.announcementTextContent}>
-            <Text style={[styles.announcementTitle, { color: colors.text }]}>Latest Announcement</Text>
-            <Text style={[styles.announcementBody, { color: colors.textMuted }]}>
-              Limited seats available for the upcoming AI & Machine Learning session. Register now!
-            </Text>
-            <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
-              <Text style={[styles.announcementLink, { color: colors.primary }]}>View All Announcements</Text>
-            </Pressable>
-          </View>
-        </View>
+        )}
 
         {/* Popular Events */}
         <View style={styles.sectionHeader}>
