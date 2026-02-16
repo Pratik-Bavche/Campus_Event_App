@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ChevronRight, Info, LogOut, X } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -136,7 +137,10 @@ export default function ProfileScreen() {
                 contentContainerStyle={{ flexGrow: 1 }}
             >
                 {/* Header */}
-                <View style={[styles.header, { backgroundColor: colors.primary }]}>
+                <LinearGradient
+                    colors={colors.headerGradient as any}
+                    style={styles.header}
+                >
                     <View style={styles.headerTop}>
                         <Text style={styles.headerTitle}>Profile</Text>
                         <Pressable
@@ -160,7 +164,7 @@ export default function ProfileScreen() {
                             <Text style={styles.editButtonText}>Edit Profile</Text>
                         </Pressable>
                     </View>
-                </View>
+                </LinearGradient>
 
                 {/* Content area */}
                 <View style={styles.content}>

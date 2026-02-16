@@ -1,13 +1,16 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { GraduationCap, Hash, Lock, Mail } from 'lucide-react-native';
+import { BookOpen, Calendar, GraduationCap, Hash, Lock, Mail, Phone, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+    Dimensions,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     StyleSheet,
     Text,
+    TouchableOpacity,
     useColorScheme,
     View
 } from 'react-native';
@@ -17,10 +20,16 @@ import { Colors } from '../../constants/theme';
 import { authService } from '../../services/api';
 import { useAuthStore } from '../../store/useAuthStore';
 
+const { width } = Dimensions.get('window');
+
 export default function SignupScreen() {
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [rollNumber, setRollNumber] = useState('');
     const [password, setPassword] = useState('');
+    const [branch, setBranch] = useState('');
+    const [year, setYear] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -31,8 +40,8 @@ export default function SignupScreen() {
     const colors = Colors[theme];
 
     const handleSignup = async () => {
-        if (!email || !rollNumber || !password) {
-            setError('Please fill in all fields');
+        if (!name || !email || !rollNumber || !password || !branch || !year || !phoneNumber) {
+            setError('All fields are mandatory');
             return;
         }
 
@@ -45,7 +54,15 @@ export default function SignupScreen() {
         setError('');
 
         try {
-            const { token, user } = await authService.register(email, rollNumber, password);
+            const { token, user } = await authService.register(
+                email,
+                rollNumber,
+                password,
+                name,
+                branch,
+                year,
+                phoneNumber
+            );
 
             await SecureStore.setItemAsync('auth_token', token);
             await SecureStore.setItemAsync('user_data', JSON.stringify(user));
@@ -62,111 +79,187 @@ export default function SignupScreen() {
     };
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, { backgroundColor: colors.background }]}
-        >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <View style={[styles.logoContainer, { backgroundColor: colors.primary }]}>
-                        <GraduationCap color="#ffffff" size={40} />
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <LinearGradient
+                colors={colors.headerGradient as any}
+                style={styles.headerGradient}
+            >
+                <View style={styles.headerContent}>
+                    <View style={styles.logoContainer}>
+                        <GraduationCap color={colors.primary} size={40} />
                     </View>
-                    <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
-                    <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                        Join your college event community
-                    </Text>
+                    <Text style={styles.headerTitle}>Create Account</Text>
+                    <Text style={styles.headerSubtitle}>Join the campus community</Text>
                 </View>
+            </LinearGradient>
 
-                <View style={styles.form}>
-                    <Input
-                        label="College Email"
-                        placeholder="student@college.edu"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        icon={<Mail size={20} color={colors.textMuted} />}
-                    />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.container}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.text }]}>
+                        <Input
+                            label="Full Name"
+                            placeholder="John Doe"
+                            value={name}
+                            onChangeText={setName}
+                            icon={<User size={20} color={colors.textMuted} />}
+                        />
 
-                    <Input
-                        label="Roll Number"
-                        placeholder="e.g. CS2023001"
-                        value={rollNumber}
-                        onChangeText={setRollNumber}
-                        autoCapitalize="characters"
-                        icon={<Hash size={20} color={colors.textMuted} />}
-                    />
+                        <Input
+                            label="College Email"
+                            placeholder="student@college.edu"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            icon={<Mail size={20} color={colors.textMuted} />}
+                        />
 
-                    <Input
-                        label="Password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                        icon={<Lock size={20} color={colors.textMuted} />}
-                    />
+                        <View style={styles.row}>
+                            <View style={{ flex: 1, marginRight: 8 }}>
+                                <Input
+                                    label="Roll Number"
+                                    placeholder="CS2023001"
+                                    value={rollNumber}
+                                    onChangeText={setRollNumber}
+                                    autoCapitalize="characters"
+                                    icon={<Hash size={20} color={colors.textMuted} />}
+                                />
+                            </View>
+                            <View style={{ flex: 1, marginLeft: 8 }}>
+                                <Input
+                                    label="Mobile No"
+                                    placeholder="9876543210"
+                                    value={phoneNumber}
+                                    onChangeText={setPhoneNumber}
+                                    keyboardType="phone-pad"
+                                    icon={<Phone size={20} color={colors.textMuted} />}
+                                />
+                            </View>
+                        </View>
 
-                    {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
+                        <View style={styles.row}>
+                            <View style={{ flex: 1, marginRight: 8 }}>
+                                <Input
+                                    label="Branch"
+                                    placeholder="Comp / IT / Entc"
+                                    value={branch}
+                                    onChangeText={setBranch}
+                                    icon={<BookOpen size={20} color={colors.textMuted} />}
+                                />
+                            </View>
+                            <View style={{ flex: 1, marginLeft: 8 }}>
+                                <Input
+                                    label="Year"
+                                    placeholder="FE / SE / TE / BE"
+                                    value={year}
+                                    onChangeText={setYear}
+                                    icon={<Calendar size={20} color={colors.textMuted} />}
+                                />
+                            </View>
+                        </View>
 
-                    <Button
-                        title="Create Account"
-                        onPress={handleSignup}
-                        loading={isLoading}
-                        style={styles.signupButton}
-                    />
+                        <Input
+                            label="Password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            icon={<Lock size={20} color={colors.textMuted} />}
+                        />
 
-                    <View style={styles.footer}>
-                        <Text style={{ color: colors.textMuted }}>Already have an account? </Text>
-                        <Link href="/login" asChild>
-                            <Text style={{ color: colors.primary, fontWeight: '600' }}>Login</Text>
-                        </Link>
+                        {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
+
+                        <Button
+                            title="Sign Up"
+                            onPress={handleSignup}
+                            loading={isLoading}
+                            style={styles.signupButton}
+                        />
+
+                        <View style={styles.footer}>
+                            <Text style={{ color: colors.textMuted }}>Already have an account? </Text>
+                            <Link href="/login" asChild>
+                                <TouchableOpacity>
+                                    <Text style={{ color: colors.primary, fontWeight: '700' }}>Login</Text>
+                                </TouchableOpacity>
+                            </Link>
+                        </View>
                     </View>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        marginTop: -20,
     },
-    scrollContent: {
-        flexGrow: 1,
-        padding: 24,
-        justifyContent: 'center',
-    },
-    header: {
+    headerGradient: {
+        height: 260,
+        paddingTop: 60,
         alignItems: 'center',
-        marginBottom: 40,
+    },
+    headerContent: {
+        alignItems: 'center',
     },
     logoContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 20,
+        width: 70,
+        height: 70,
+        borderRadius: 22,
+        backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 12,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
     },
-    title: {
-        fontSize: 28,
+    headerTitle: {
+        fontSize: 26,
         fontWeight: 'bold',
-        marginBottom: 8,
+        color: '#fff',
+        marginBottom: 4,
     },
-    subtitle: {
-        fontSize: 16,
-        textAlign: 'center',
+    headerSubtitle: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.8)',
     },
-    form: {
-        width: '100%',
+    scrollContent: {
+        paddingHorizontal: 24,
+        paddingBottom: 40,
+    },
+    card: {
+        borderRadius: 30,
+        padding: 24,
+        paddingTop: 30,
+        elevation: 10,
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.1,
+        shadowRadius: 15,
+    },
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
     },
     signupButton: {
         marginTop: 10,
         height: 56,
+        borderRadius: 16,
     },
     errorText: {
         marginBottom: 16,
         textAlign: 'center',
+        fontWeight: '600',
     },
     footer: {
         flexDirection: 'row',

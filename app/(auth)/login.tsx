@@ -1,13 +1,16 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { GraduationCap, Lock, Mail } from 'lucide-react-native';
+import { ChevronRight, GraduationCap, Hash, Lock, Mail } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+    Dimensions,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     StyleSheet,
     Text,
+    TouchableOpacity,
     useColorScheme,
     View
 } from 'react-native';
@@ -17,8 +20,11 @@ import { Colors } from '../../constants/theme';
 import { authService } from '../../services/api';
 import { useAuthStore } from '../../store/useAuthStore';
 
+const { width, height } = Dimensions.get('window');
+
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
+    const [rollNumber, setRollNumber] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -30,8 +36,8 @@ export default function LoginScreen() {
     const colors = Colors[theme];
 
     const handleLogin = async () => {
-        if (!email || !password) {
-            setError('Please fill in all fields');
+        if (!email || !password || !rollNumber) {
+            setError('Please fill in all mandatory fields');
             return;
         }
 
@@ -39,11 +45,7 @@ export default function LoginScreen() {
         setError('');
 
         try {
-            // Roll number is required by the prompt, but for login we'll assume email/password 
-            // or we can add roll number field. Prompt said: Fields: College email, Roll number, Password
-            // I'll add roll number to the login as well if needed, but usually email/password is enough.
-            // Let's stick to the prompt's requested fields.
-            const { token, user } = await authService.login(email, 'CS123', password);
+            const { token, user } = await authService.login(email, rollNumber, password);
 
             await SecureStore.setItemAsync('auth_token', token);
             await SecureStore.setItemAsync('user_data', JSON.stringify(user));
@@ -60,59 +62,89 @@ export default function LoginScreen() {
     };
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.container, { backgroundColor: colors.background }]}
-        >
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <View style={[styles.logoContainer, { backgroundColor: colors.primary }]}>
-                        <GraduationCap color="#ffffff" size={40} />
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <LinearGradient
+                colors={colors.headerGradient as any}
+                style={styles.headerGradient}
+            >
+                <View style={styles.headerContent}>
+                    <View style={styles.logoContainer}>
+                        <GraduationCap color={colors.primary} size={42} />
                     </View>
-                    <Text style={[styles.title, { color: colors.text }]}>Welcome Back</Text>
-                    <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                        Enter your details to access your account
-                    </Text>
+                    <Text style={styles.headerTitle}>Welcome Back</Text>
+                    <Text style={styles.headerSubtitle}>Login to access your campus dashboard</Text>
                 </View>
+            </LinearGradient>
 
-                <View style={styles.form}>
-                    <Input
-                        label="College Email"
-                        placeholder="student@college.edu"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        icon={<Mail size={20} color={colors.textMuted} />}
-                    />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.container}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    bounces={false}
+                >
+                    <View style={[styles.card, { backgroundColor: colors.card }]}>
+                        <View style={styles.formHeader}>
+                            <Text style={[styles.formTitle, { color: colors.text }]}>Student Login</Text>
+                            <View style={[styles.titleSeparator, { backgroundColor: colors.primary }]} />
+                        </View>
 
-                    <Input
-                        label="Password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                        icon={<Lock size={20} color={colors.textMuted} />}
-                    />
+                        <Input
+                            label="College Email"
+                            placeholder="student@college.edu"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            icon={<Mail size={20} color={colors.textMuted} />}
+                        />
 
-                    {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
+                        <Input
+                            label="Roll Number"
+                            placeholder="CS2023001"
+                            value={rollNumber}
+                            onChangeText={setRollNumber}
+                            autoCapitalize="characters"
+                            icon={<Hash size={20} color={colors.textMuted} />}
+                        />
 
-                    <Button
-                        title="Login"
-                        onPress={handleLogin}
-                        loading={isLoading}
-                        style={styles.loginButton}
-                    />
+                        <Input
+                            label="Password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            icon={<Lock size={20} color={colors.textMuted} />}
+                        />
 
-                    <View style={styles.footer}>
-                        <Text style={{ color: colors.textMuted }}>Don't have an account? </Text>
-                        <Link href="/signup" asChild>
-                            <Text style={{ color: colors.primary, fontWeight: '600' }}>Sign Up</Text>
-                        </Link>
+                        <TouchableOpacity style={styles.forgotPassword}>
+                            <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Forgot Password?</Text>
+                        </TouchableOpacity>
+
+                        {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
+
+                        <Button
+                            title="Sign In"
+                            onPress={handleLogin}
+                            loading={isLoading}
+                            style={styles.loginButton}
+                            icon={<ChevronRight size={20} color="#fff" />}
+                        />
+
+                        <View style={styles.footer}>
+                            <Text style={{ color: colors.textMuted }}>Don't have an account? </Text>
+                            <Link href="/signup" asChild>
+                                <TouchableOpacity>
+                                    <Text style={{ color: colors.primary, fontWeight: '700' }}>Create One</Text>
+                                </TouchableOpacity>
+                            </Link>
+                        </View>
                     </View>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </View>
     );
 }
 
@@ -120,46 +152,97 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    scrollContent: {
-        flexGrow: 1,
-        padding: 24,
-        justifyContent: 'center',
-    },
-    header: {
+    headerGradient: {
+        height: height * 0.35,
         alignItems: 'center',
-        marginBottom: 40,
+        justifyContent: 'center',
+        paddingBottom: 20, // Add some space for the card overlap
+    },
+    headerContent: {
+        alignItems: 'center',
+        paddingHorizontal: 30,
     },
     logoContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 20,
+        width: 75,
+        height: 75,
+        borderRadius: 22,
+        backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 15,
+        elevation: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
     },
-    title: {
-        fontSize: 28,
+    headerTitle: {
+        fontSize: 30,
         fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
+        color: '#fff',
+        marginBottom: 6,
         textAlign: 'center',
     },
-    form: {
-        width: '100%',
+    headerSubtitle: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.85)',
+        textAlign: 'center',
+        lineHeight: 20,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        paddingHorizontal: 24,
+        paddingBottom: 40,
+        justifyContent: 'flex-start',
+    },
+    card: {
+        borderRadius: 35,
+        padding: 28,
+        paddingTop: 40,
+        marginTop: -20,
+        elevation: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        zIndex: 10,
+    },
+    formHeader: {
+        marginBottom: 24,
+    },
+    formTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 6,
+    },
+    titleSeparator: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+    },
+    forgotPassword: {
+        alignSelf: 'flex-end',
+        marginBottom: 24,
+        marginTop: -4,
     },
     loginButton: {
-        marginTop: 10,
-        height: 56,
+        height: 58,
+        borderRadius: 18,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
     },
     errorText: {
-        marginBottom: 16,
+        marginBottom: 20,
         textAlign: 'center',
+        fontWeight: '600',
+        fontSize: 14,
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginTop: 24,
+        marginTop: 30,
     },
 });

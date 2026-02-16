@@ -23,12 +23,12 @@ export const authService = {
         const response = await api.post('/login', { email, rollNumber, password });
         return response.data;
     },
-    register: async (email: string, rollNumber: string, password: string): Promise<{ token: string; user: User }> => {
+    register: async (email: string, rollNumber: string, password: string, name: string, department: string, year: string, phoneNumber: string): Promise<{ token: string; user: User }> => {
         if (isDevelopment) {
             await new Promise(resolve => setTimeout(resolve, 1000));
-            return { token: 'mock-jwt-token', user: { ...mockUser, email, rollNumber } };
+            return { token: 'mock-jwt-token', user: { ...mockUser, email, rollNumber, name, department, year, phoneNumber } };
         }
-        const response = await api.post('/register', { email, rollNumber, password });
+        const response = await api.post('/register', { email, rollNumber, password, name, department, year, phoneNumber });
         return response.data;
     },
 };
