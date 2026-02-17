@@ -64,19 +64,28 @@ export default function AnnouncementsScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <Stack.Screen
-                options={{
-                    headerShown: true,
-                    title: 'Announcements',
-                    headerStyle: { backgroundColor: colors.background },
-                    headerTintColor: colors.text,
-                    headerLeft: () => (
-                        <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
-                            <ArrowLeft size={24} color={colors.text} />
-                        </Pressable>
-                    )
-                }}
-            />
+            <Stack.Screen options={{ headerShown: false }} />
+
+            {/* Custom Header */}
+            <View style={{
+                backgroundColor: colors.primary,
+                paddingTop: 60,
+                paddingBottom: 20,
+                paddingHorizontal: 20,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 16,
+                elevation: 4,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4
+            }}>
+                <Pressable onPress={() => router.back()} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
+                    <ArrowLeft size={24} color="#fff" />
+                </Pressable>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#fff' }}>Announcements</Text>
+            </View>
 
             <FlatList
                 data={announcements}
