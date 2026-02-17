@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
     listContent: {
         padding: 20,
         paddingTop: 0,
+        paddingBottom: 100,
     },
     regCard: {
         padding: 16,

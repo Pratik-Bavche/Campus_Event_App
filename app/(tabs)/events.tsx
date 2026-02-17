@@ -236,6 +236,7 @@ const styles = StyleSheet.create({
     listContent: {
         padding: 24,
         paddingTop: 8,
+        paddingBottom: 100,
     },
     eventCard: {
         padding: 16,

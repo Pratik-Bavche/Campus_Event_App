@@ -93,6 +93,7 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={{ paddingBottom: 100 }}
       refreshControl={
         <RefreshControl refreshing={isEventsLoading} onRefresh={fetchEvents} tintColor={colors.primary} />
       }

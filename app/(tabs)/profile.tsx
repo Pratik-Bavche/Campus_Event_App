@@ -182,7 +182,7 @@ export default function ProfileScreen() {
             <ScrollView
                 style={styles.container}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ flexGrow: 1 }}
+                contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}
             >
                 {/* Header */}
                 <LinearGradient
