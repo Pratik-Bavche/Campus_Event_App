@@ -284,6 +284,7 @@ export const announcementService = {
         const { data, error } = await supabase
             .from('announcements')
             .select('*')
+            .order('pinned', { ascending: false })
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -292,9 +293,12 @@ export const announcementService = {
         }
         return data.map((a: any) => ({
             id: a.id,
+            clubId: a.club_id,
             title: a.title,
             content: a.content,
-            date: a.created_at
+            eventId: a.event_id,
+            date: a.created_at,
+            pinned: a.pinned
         }));
     },
 };

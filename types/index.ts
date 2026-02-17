@@ -40,9 +40,12 @@ export interface Event {
 
 export interface Announcement {
     id: string;
+    clubId: string;
     title: string;
     content: string;
+    eventId?: string;
     date: string;
+    pinned: boolean;
 }
 
 export interface Registration {

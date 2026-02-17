@@ -174,36 +174,50 @@ export default function HomeScreen() {
       <View style={[styles.content, { backgroundColor: colors.background }]}>
         {/* Announcement Card */}
         {announcements.length > 0 && (
-          <View style={[
-            styles.announcementCard,
-            {
-              backgroundColor: announcements[0].title.toLowerCase().includes('cancel') || announcements[0].title.toLowerCase().includes('postpone')
-                ? colors.error + '10'
-                : colors.announcementBg,
-              borderColor: announcements[0].title.toLowerCase().includes('cancel') || announcements[0].title.toLowerCase().includes('postpone')
-                ? colors.error + '30'
-                : colors.announcementBorder
-            }
-          ]}>
-            <View style={[
-              styles.announcementIcon,
-              {
-                backgroundColor: announcements[0].title.toLowerCase().includes('cancel') || announcements[0].title.toLowerCase().includes('postpone')
-                  ? colors.error
-                  : '#f97316'
-              }
-            ]}>
-              <Megaphone size={20} color="#fff" />
-            </View>
-            <View style={styles.announcementTextContent}>
-              <Text style={[styles.announcementTitle, { color: colors.text }]}>{announcements[0].title}</Text>
-              <Text style={[styles.announcementBody, { color: colors.textMuted }]}>
-                {announcements[0].content}
-              </Text>
-              <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}>
-                <Text style={[styles.announcementLink, { color: colors.primary }]}>View All Announcements</Text>
-              </Pressable>
-            </View>
+          <View style={{ gap: 16, marginBottom: 32 }}>
+            {announcements.map((announcement) => (
+              <View
+                key={announcement.id}
+                style={[
+                  styles.announcementCard,
+                  {
+                    marginBottom: 0, // Override strict margin from styles since we use gap
+                    backgroundColor: announcement.title.toLowerCase().includes('cancel') || announcement.title.toLowerCase().includes('postpone')
+                      ? colors.error + '10'
+                      : colors.announcementBg,
+                    borderColor: announcement.title.toLowerCase().includes('cancel') || announcement.title.toLowerCase().includes('postpone')
+                      ? colors.error + '30'
+                      : colors.announcementBorder
+                  }
+                ]}
+              >
+                <View style={[
+                  styles.announcementIcon,
+                  {
+                    backgroundColor: announcement.title.toLowerCase().includes('cancel') || announcement.title.toLowerCase().includes('postpone')
+                      ? colors.error
+                      : '#f97316'
+                  }
+                ]}>
+                  {announcement.pinned ? (
+                    <Megaphone size={20} color="#fff" />
+                  ) : (
+                    <Megaphone size={20} color="#fff" />
+                  )}
+                </View>
+                <View style={styles.announcementTextContent}>
+                  <Text style={[styles.announcementTitle, { color: colors.text }]}>
+                    {announcement.pinned && "📌 "}{announcement.title}
+                  </Text>
+                  <Text style={[styles.announcementBody, { color: colors.textMuted }]}>
+                    {announcement.content}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                    {new Date(announcement.date).toLocaleDateString()}
+                  </Text>
+                </View>
+              </View>
+            ))}
           </View>
         )}
 
