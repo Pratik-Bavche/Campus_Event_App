@@ -17,6 +17,7 @@ import {
     View
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 import { Colors } from '../../constants/theme';
 import { profileService } from '../../services/api';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -77,6 +78,18 @@ export default function ProfileScreen() {
     const registeredCount = myRegistrations?.filter(r => r.status !== 'cancelled').length || 0;
     const completedCount = myRegistrations?.filter(r => new Date(r.event.date) <= new Date() && r.status !== 'cancelled').length || 0;
     const cancelledCount = myRegistrations?.filter(r => r.status === 'cancelled').length || 0;
+
+    const branchOptions = [
+        { label: 'Information Technology', value: 'Information Technology' },
+        { label: 'Computer Engineering', value: 'Computer Science' },
+        { label: 'Electronics and Telecommunication Engineering', value: 'Electronics' },
+        { label: 'Mechanical Engineering', value: 'Mechanical' },
+        { label: 'Civil Engineering', value: 'Civil' },
+        { label: 'Instrumentation and Control Engineering', value: 'Instrumentation and Control' },
+        { label: 'Robotics and Automation', value: 'Robotics and Automation' },
+        { label: 'Chemical Engineering', value: 'Chemical' },
+        { label: 'Artificial Intelligence and Data Science', value: 'Artificial Intelligence and Data Science' },
+    ];
 
     // Edit Modal State
     const [isEditModalVisible, setEditModalVisible] = useState(false);
@@ -301,8 +314,6 @@ export default function ProfileScreen() {
                                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
                                 value={editForm.full_name}
                                 onChangeText={(text) => setEditForm(prev => ({ ...prev, full_name: text }))}
-                                placeholder="Enter your name"
-                                placeholderTextColor={colors.textMuted}
                             />
 
                             <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Roll Number</Text>
@@ -310,47 +321,40 @@ export default function ProfileScreen() {
                                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
                                 value={editForm.roll_number}
                                 onChangeText={(text) => setEditForm(prev => ({ ...prev, roll_number: text }))}
-                                placeholder="Enter roll number"
-                                placeholderTextColor={colors.textMuted}
                             />
 
-                            <View style={styles.inputRow}>
-                                <View style={{ flex: 1, marginRight: 8 }}>
-                                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Department</Text>
-                                    <TextInput
-                                        style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-                                        value={editForm.department}
-                                        onChangeText={(text) => setEditForm(prev => ({ ...prev, department: text }))}
-                                        placeholder="Dept"
-                                        placeholderTextColor={colors.textMuted}
-                                    />
-                                </View>
-                                <View style={{ flex: 1, marginLeft: 8 }}>
-                                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Year</Text>
-                                    <View style={styles.yearSelectionGrid}>
-                                        {[
-                                            { label: 'FE', value: 1 },
-                                            { label: 'SE', value: 2 },
-                                            { label: 'TE', value: 3 },
-                                            { label: 'BE', value: 4 }
-                                        ].map((yr) => (
-                                            <Pressable
-                                                key={yr.label}
-                                                onPress={() => setEditForm(prev => ({ ...prev, year: yr.value }))}
-                                                style={[
-                                                    styles.yearChip,
-                                                    { borderColor: colors.border },
-                                                    editForm.year === yr.value && { backgroundColor: colors.primary, borderColor: colors.primary }
-                                                ]}
-                                            >
-                                                <Text style={[
-                                                    styles.yearChipText,
-                                                    { color: colors.text },
-                                                    editForm.year === yr.value && { color: '#fff' }
-                                                ]}>{yr.label}</Text>
-                                            </Pressable>
-                                        ))}
-                                    </View>
+                            <Select
+                                label="Branch"
+                                value={editForm.department}
+                                onSelect={(val) => setEditForm(prev => ({ ...prev, department: val }))}
+                                options={branchOptions}
+                            />
+
+                            <View style={{ marginBottom: 16 }}>
+                                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Year</Text>
+                                <View style={styles.yearSelectionGrid}>
+                                    {[
+                                        { label: 'FE', value: 1 },
+                                        { label: 'SE', value: 2 },
+                                        { label: 'TE', value: 3 },
+                                        { label: 'BE', value: 4 }
+                                    ].map((yr) => (
+                                        <Pressable
+                                            key={yr.label}
+                                            onPress={() => setEditForm(prev => ({ ...prev, year: yr.value }))}
+                                            style={[
+                                                styles.yearChip,
+                                                { borderColor: colors.border },
+                                                editForm.year === yr.value && { backgroundColor: colors.primary, borderColor: colors.primary }
+                                            ]}
+                                        >
+                                            <Text style={[
+                                                styles.yearChipText,
+                                                { color: colors.text },
+                                                editForm.year === yr.value && { color: '#fff' }
+                                            ]}>{yr.label}</Text>
+                                        </Pressable>
+                                    ))}
                                 </View>
                             </View>
 
@@ -359,9 +363,7 @@ export default function ProfileScreen() {
                                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
                                 value={editForm.mobile_number}
                                 onChangeText={(text) => setEditForm(prev => ({ ...prev, mobile_number: text }))}
-                                placeholder="Phone number"
                                 keyboardType="phone-pad"
-                                placeholderTextColor={colors.textMuted}
                             />
 
                             <Button

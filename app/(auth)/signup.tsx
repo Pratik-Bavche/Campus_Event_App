@@ -1,9 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import { BookOpen, Calendar, GraduationCap, Hash, Lock, Phone, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+    Alert,
     Dimensions,
     KeyboardAvoidingView,
     Platform,
@@ -41,12 +41,15 @@ export default function SignupScreen() {
     const colors = Colors[theme];
 
     const branchOptions = [
-        { label: 'Computer Engineering', value: 'Computer' },
-        { label: 'Information Technology', value: 'IT' },
-        { label: 'Electronics & Telecommunication', value: 'ENTC' },
+        { label: 'Information Technology', value: 'Information Technology' },
+        { label: 'Computer Engineering', value: 'Computer Science' },
+        { label: 'Electronics and Telecommunication Engineering', value: 'Electronics' },
         { label: 'Mechanical Engineering', value: 'Mechanical' },
         { label: 'Civil Engineering', value: 'Civil' },
-        { label: 'Instrumentation', value: 'Instrumentation' },
+        { label: 'Instrumentation and Control Engineering', value: 'Instrumentation and Control' },
+        { label: 'Robotics and Automation', value: 'Robotics and Automation' },
+        { label: 'Chemical Engineering', value: 'Chemical' },
+        { label: 'Artificial Intelligence and Data Science', value: 'Artificial Intelligence and Data Science' },
     ];
 
     const yearOptions = [
@@ -73,7 +76,7 @@ export default function SignupScreen() {
         setError('');
 
         try {
-            const { token, user } = await authService.register(
+            await authService.register(
                 '', // Email is now handled internally by rollNumber for testing
                 rollNumber,
                 password,
@@ -83,13 +86,16 @@ export default function SignupScreen() {
                 phoneNumber
             );
 
-            await AsyncStorage.setItem('auth_token', token);
-            await AsyncStorage.setItem('user_data', JSON.stringify(user));
-
-            setToken(token);
-            setUser(user);
-
-            router.replace('/(tabs)');
+            Alert.alert(
+                'Success',
+                'Account created successfully. Please login to continue.',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => router.replace('/login')
+                    }
+                ]
+            );
         } catch (err: any) {
             setError(err.message || 'Registration failed');
         } finally {
@@ -123,7 +129,6 @@ export default function SignupScreen() {
                     <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.text }]}>
                         <Input
                             label="Full Name"
-                            placeholder="John Doe"
                             value={name}
                             onChangeText={setName}
                             icon={<User size={20} color={colors.textMuted} />}
@@ -145,7 +150,6 @@ export default function SignupScreen() {
                             <View style={{ flex: 1, marginRight: 8 }}>
                                 <Input
                                     label="Roll Number"
-                                    placeholder="CS2023001"
                                     value={rollNumber}
                                     onChangeText={setRollNumber}
                                     autoCapitalize="characters"
@@ -155,7 +159,6 @@ export default function SignupScreen() {
                             <View style={{ flex: 1, marginLeft: 8 }}>
                                 <Input
                                     label="Mobile No"
-                                    placeholder="9876543210"
                                     value={phoneNumber}
                                     onChangeText={setPhoneNumber}
                                     keyboardType="phone-pad"
@@ -164,32 +167,24 @@ export default function SignupScreen() {
                             </View>
                         </View>
 
-                        <View style={styles.row}>
-                            <View style={{ flex: 1, marginRight: 8 }}>
-                                <Select
-                                    label="Branch"
-                                    placeholder="Select Branch"
-                                    value={branch}
-                                    onSelect={setBranch}
-                                    options={branchOptions}
-                                    icon={<BookOpen size={20} color={colors.textMuted} />}
-                                />
-                            </View>
-                            <View style={{ flex: 1, marginLeft: 8 }}>
-                                <Select
-                                    label="Year"
-                                    placeholder="Select Year"
-                                    value={year}
-                                    onSelect={setYear}
-                                    options={yearOptions}
-                                    icon={<Calendar size={20} color={colors.textMuted} />}
-                                />
-                            </View>
-                        </View>
+                        <Select
+                            label="Branch"
+                            value={branch}
+                            onSelect={setBranch}
+                            options={branchOptions}
+                            icon={<BookOpen size={20} color={colors.textMuted} />}
+                        />
+
+                        <Select
+                            label="Year"
+                            value={year}
+                            onSelect={setYear}
+                            options={yearOptions}
+                            icon={<Calendar size={20} color={colors.textMuted} />}
+                        />
 
                         <Input
                             label="Password"
-                            placeholder="••••••••"
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry

@@ -105,7 +105,6 @@ export default function LoginScreen() {
 
                         <Input
                             label="Roll Number"
-                            placeholder="CS2023001"
                             value={rollNumber}
                             onChangeText={setRollNumber}
                             autoCapitalize="characters"
@@ -114,7 +113,6 @@ export default function LoginScreen() {
 
                         <Input
                             label="Password"
-                            placeholder="••••••••"
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry
