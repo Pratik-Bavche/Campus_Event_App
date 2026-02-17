@@ -1,217 +1,118 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { BookOpen, Calendar, GraduationCap, Hash, Lock, Phone, User } from 'lucide-react-native';
-import React, { useState } from 'react';
-import {
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View
-} from 'react-native';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
-import { Colors } from '../../constants/theme';
-import { authService } from '../../services/api';
-import { useAuthStore } from '../../store/useAuthStore';
+import { BookOpen, Calendar, GraduationCap, Hash, Lock, Mail, Phone, User } from 'lucide-react-native';
+// ...
+const handleSignup = async () => {
+    if (!name || !email || !rollNumber || !password || !branch || !year || !phoneNumber) {
+        setError('All fields are mandatory');
+        return;
+    }
 
-const { width } = Dimensions.get('window');
+    /* 
+    if (!email.endsWith('.edu')) {
+        setError('Please use your college email address');
+        // return; // Commented for testing flexibility
+    }
+    */
 
-export default function SignupScreen() {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [rollNumber, setRollNumber] = useState('');
-    const [password, setPassword] = useState('');
-    const [branch, setBranch] = useState('');
-    const [year, setYear] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
+    setIsLoading(true);
+    setError('');
 
-    const router = useRouter();
-    const setUser = useAuthStore(state => state.setUser);
-    const setToken = useAuthStore(state => state.setToken);
-    const theme = useColorScheme() ?? 'light';
-    const colors = Colors[theme];
+    try {
+        await authService.register(
+            email,
+            rollNumber,
+            password,
+            name,
+            branch,
+            year,
+            phoneNumber
+        );
+        // ...
+        <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.text }]}>
+            <Input
+                label="Full Name"
+                value={name}
+                onChangeText={setName}
+                icon={<User size={20} color={colors.textMuted} />}
+            />
 
-    const branchOptions = [
-        { label: 'Information Technology', value: 'Information Technology' },
-        { label: 'Computer Engineering', value: 'Computer Science' },
-        { label: 'Electronics and Telecommunication Engineering', value: 'Electronics' },
-        { label: 'Mechanical Engineering', value: 'Mechanical' },
-        { label: 'Civil Engineering', value: 'Civil' },
-        { label: 'Instrumentation and Control Engineering', value: 'Instrumentation and Control' },
-        { label: 'Robotics and Automation', value: 'Robotics and Automation' },
-        { label: 'Chemical Engineering', value: 'Chemical' },
-        { label: 'Artificial Intelligence and Data Science', value: 'Artificial Intelligence and Data Science' },
-    ];
+            <Input
+                label="College Email"
+                placeholder="student@college.edu"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                icon={<Mail size={20} color={colors.textMuted} />}
+            />
 
-    const yearOptions = [
-        { label: 'First Year (FE)', value: 'FE' },
-        { label: 'Second Year (SE)', value: 'SE' },
-        { label: 'Third Year (TE)', value: 'TE' },
-        { label: 'Fourth Year (BE)', value: 'BE' },
-    ];
-
-    const handleSignup = async () => {
-        if (!name || !rollNumber || !password || !branch || !year || !phoneNumber) {
-            setError('All fields are mandatory');
-            return;
-        }
-
-        /* 
-        if (!email.endsWith('.edu')) {
-            setError('Please use your college email address');
-            // return; // Commented for testing flexibility
-        }
-        */
-
-        setIsLoading(true);
-        setError('');
-
-        try {
-            await authService.register(
-                '', // Email is now handled internally by rollNumber for testing
-                rollNumber,
-                password,
-                name,
-                branch,
-                year,
-                phoneNumber
-            );
-
-            Alert.alert(
-                'Success',
-                'Account created successfully. Please login to continue.',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => router.replace('/login')
-                    }
-                ]
-            );
-        } catch (err: any) {
-            setError(err.message || 'Registration failed');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <View style={{ flex: 1, backgroundColor: colors.background }}>
-            <LinearGradient
-                colors={colors.headerGradient as any}
-                style={styles.headerGradient}
-            >
-                <View style={styles.headerContent}>
-                    <View style={styles.logoContainer}>
-                        <GraduationCap color={colors.primary} size={40} />
-                    </View>
-                    <Text style={styles.headerTitle}>Create Account</Text>
-                    <Text style={styles.headerSubtitle}>Join the campus community</Text>
+            <View style={styles.row}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                    <Input
+                        label="Roll Number"
+                        value={rollNumber}
+                        onChangeText={setRollNumber}
+                        autoCapitalize="characters"
+                        icon={<Hash size={20} color={colors.textMuted} />}
+                    />
                 </View>
-            </LinearGradient>
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Input
+                        label="Mobile No"
+                        value={phoneNumber}
+                        onChangeText={setPhoneNumber}
+                        keyboardType="phone-pad"
+                        icon={<Phone size={20} color={colors.textMuted} />}
+                    />
+                </View>
+            </View>
 
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.container}
-            >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.text }]}>
-                        <Input
-                            label="Full Name"
-                            value={name}
-                            onChangeText={setName}
-                            icon={<User size={20} color={colors.textMuted} />}
-                        />
+            <Select
+                label="Branch"
+                value={branch}
+                onSelect={setBranch}
+                options={branchOptions}
+                icon={<BookOpen size={20} color={colors.textMuted} />}
+            />
 
-                        {/* 
-                        <Input
-                            label="College Email"
-                            placeholder="student@college.edu"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            icon={<Mail size={20} color={colors.textMuted} />}
-                        /> 
-                        */}
+            <Select
+                label="Year"
+                value={year}
+                onSelect={setYear}
+                options={yearOptions}
+                icon={<Calendar size={20} color={colors.textMuted} />}
+            />
 
-                        <View style={styles.row}>
-                            <View style={{ flex: 1, marginRight: 8 }}>
-                                <Input
-                                    label="Roll Number"
-                                    value={rollNumber}
-                                    onChangeText={setRollNumber}
-                                    autoCapitalize="characters"
-                                    icon={<Hash size={20} color={colors.textMuted} />}
-                                />
-                            </View>
-                            <View style={{ flex: 1, marginLeft: 8 }}>
-                                <Input
-                                    label="Mobile No"
-                                    value={phoneNumber}
-                                    onChangeText={setPhoneNumber}
-                                    keyboardType="phone-pad"
-                                    icon={<Phone size={20} color={colors.textMuted} />}
-                                />
-                            </View>
-                        </View>
+            <Input
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                icon={<Lock size={20} color={colors.textMuted} />}
+            />
 
-                        <Select
-                            label="Branch"
-                            value={branch}
-                            onSelect={setBranch}
-                            options={branchOptions}
-                            icon={<BookOpen size={20} color={colors.textMuted} />}
-                        />
+            {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
 
-                        <Select
-                            label="Year"
-                            value={year}
-                            onSelect={setYear}
-                            options={yearOptions}
-                            icon={<Calendar size={20} color={colors.textMuted} />}
-                        />
+            <Button
+                title="Sign Up"
+                onPress={handleSignup}
+                loading={isLoading}
+                style={styles.signupButton}
+            />
 
-                        <Input
-                            label="Password"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry
-                            icon={<Lock size={20} color={colors.textMuted} />}
-                        />
-
-                        {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
-
-                        <Button
-                            title="Sign Up"
-                            onPress={handleSignup}
-                            loading={isLoading}
-                            style={styles.signupButton}
-                        />
-
-                        <View style={styles.footer}>
-                            <Text style={{ color: colors.textMuted }}>Already have an account? </Text>
-                            <Link href="/login" asChild>
-                                <TouchableOpacity>
-                                    <Text style={{ color: colors.primary, fontWeight: '700' }}>Login</Text>
-                                </TouchableOpacity>
-                            </Link>
-                        </View>
-                    </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
+            <View style={styles.footer}>
+                <Text style={{ color: colors.textMuted }}>Already have an account? </Text>
+                <Link href="/login" asChild>
+                    <TouchableOpacity>
+                        <Text style={{ color: colors.primary, fontWeight: '700' }}>Login</Text>
+                    </TouchableOpacity>
+                </Link>
+            </View>
         </View>
+                </ScrollView >
+            </KeyboardAvoidingView >
+        </View >
     );
 }
 

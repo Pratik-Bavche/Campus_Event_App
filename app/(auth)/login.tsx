@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { ChevronRight, GraduationCap, Hash, Lock } from 'lucide-react-native';
+import { ChevronRight, GraduationCap, Lock, Mail } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
     Dimensions,
@@ -24,7 +24,6 @@ const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
-    const [rollNumber, setRollNumber] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -36,7 +35,7 @@ export default function LoginScreen() {
     const colors = Colors[theme];
 
     const handleLogin = async () => {
-        if (!password || !rollNumber) {
+        if (!email || !password) {
             setError('Please fill in all mandatory fields');
             return;
         }
@@ -45,7 +44,8 @@ export default function LoginScreen() {
         setError('');
 
         try {
-            const { token, user } = await authService.login('', rollNumber, password);
+            // Using email for login. Roll number param kept as empty string to match current signature
+            const { token, user } = await authService.login(email, '', password);
 
             await AsyncStorage.setItem('auth_token', token);
             await AsyncStorage.setItem('user_data', JSON.stringify(user));
@@ -91,7 +91,6 @@ export default function LoginScreen() {
                             <View style={[styles.titleSeparator, { backgroundColor: colors.primary }]} />
                         </View>
 
-                        {/* 
                         <Input
                             label="College Email"
                             placeholder="student@college.edu"
@@ -100,15 +99,6 @@ export default function LoginScreen() {
                             keyboardType="email-address"
                             autoCapitalize="none"
                             icon={<Mail size={20} color={colors.textMuted} />}
-                        /> 
-                        */}
-
-                        <Input
-                            label="Roll Number"
-                            value={rollNumber}
-                            onChangeText={setRollNumber}
-                            autoCapitalize="characters"
-                            icon={<Hash size={20} color={colors.textMuted} />}
                         />
 
                         <Input
