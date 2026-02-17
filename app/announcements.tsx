@@ -71,19 +71,8 @@ export default function AnnouncementsScreen() {
                     headerStyle: { backgroundColor: colors.background },
                     headerTintColor: colors.text,
                     headerLeft: () => (
-                        <Pressable
-                            onPress={() => router.back()}
-                            style={{
-                                marginRight: 16,
-                                width: 40,
-                                height: 40,
-                                borderRadius: 20,
-                                backgroundColor: colors.primary,
-                                justifyContent: 'center',
-                                alignItems: 'center'
-                            }}
-                        >
-                            <ArrowLeft size={24} color="#fff" />
+                        <Pressable onPress={() => router.back()} style={{ marginRight: 16 }}>
+                            <ArrowLeft size={24} color={colors.text} />
                         </Pressable>
                     )
                 }}
@@ -142,7 +131,6 @@ const styles = StyleSheet.create({
     announcementTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        marginTop: 4,
     },
     announcementBody: {
         fontSize: 14,
