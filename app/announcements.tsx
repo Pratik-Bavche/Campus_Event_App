@@ -3,6 +3,7 @@ import { ArrowLeft, Megaphone } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import {
     FlatList,
+    Platform,
     Pressable,
     StyleSheet,
     Text,
