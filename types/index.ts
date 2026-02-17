@@ -2,6 +2,7 @@ export interface User {
     id: string;
     full_name: string;
     roll_number: string;
+    email?: string; // Added email field
     mobile_number?: string;
     department?: string;
     year: number;

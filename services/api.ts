@@ -31,12 +31,30 @@ export const authService = {
         return { token: data.session?.access_token || '', user: userData as User };
     },
     register: async (email: string, rollNumber: string, password: string, name: string, department: string, year: string, phoneNumber: string): Promise<{ token: string; user: User }> => {
+        // Check if roll number already exists
+        const { data: existingUser } = await supabase
+            .from('students')
+            .select('roll_number')
+            .eq('roll_number', rollNumber)
+            .single();
+
+        if (existingUser) {
+            throw new Error('Roll number already registered');
+        }
+
         const { data, error } = await supabase.auth.signUp({
             email: email,
             password: password,
+            options: {
+                data: {
+                    full_name: name,
+                    roll_number: rollNumber,
+                }
+            }
         });
 
         if (error) throw error;
+        if (!data.user) throw new Error('Registration failed: No user data');
 
         // Convert FE/SE/TE/BE or string year to number 1-5
         let yearNumber = parseInt(year);
@@ -46,8 +64,9 @@ export const authService = {
         }
 
         const newUser: User = {
-            id: data.user?.id || '',
+            id: data.user.id,
             full_name: name,
+            email: email,
             roll_number: rollNumber,
             mobile_number: phoneNumber,
             department,
@@ -58,7 +77,11 @@ export const authService = {
             .from('students')
             .insert([newUser]);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+            // If insert fails, we should ideally clean up the auth user, but for now just throw
+            console.error('Error creating student profile:', insertError);
+            throw new Error('Failed to create student profile: ' + insertError.message);
+        }
 
         return { token: data.session?.access_token || '', user: newUser };
     },
