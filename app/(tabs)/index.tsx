@@ -174,50 +174,45 @@ export default function HomeScreen() {
       <View style={[styles.content, { backgroundColor: colors.background }]}>
         {/* Announcement Card */}
         {announcements.length > 0 && (
-          <View style={{ gap: 16, marginBottom: 32 }}>
-            {announcements.map((announcement) => (
-              <View
-                key={announcement.id}
-                style={[
-                  styles.announcementCard,
-                  {
-                    marginBottom: 0, // Override strict margin from styles since we use gap
-                    backgroundColor: announcement.title.toLowerCase().includes('cancel') || announcement.title.toLowerCase().includes('postpone')
-                      ? colors.error + '10'
-                      : colors.announcementBg,
-                    borderColor: announcement.title.toLowerCase().includes('cancel') || announcement.title.toLowerCase().includes('postpone')
-                      ? colors.error + '30'
-                      : colors.announcementBorder
-                  }
-                ]}
-              >
-                <View style={[
-                  styles.announcementIcon,
-                  {
-                    backgroundColor: announcement.title.toLowerCase().includes('cancel') || announcement.title.toLowerCase().includes('postpone')
-                      ? colors.error
-                      : '#f97316'
-                  }
-                ]}>
-                  {announcement.pinned ? (
-                    <Megaphone size={20} color="#fff" />
-                  ) : (
-                    <Megaphone size={20} color="#fff" />
-                  )}
-                </View>
-                <View style={styles.announcementTextContent}>
-                  <Text style={[styles.announcementTitle, { color: colors.text }]}>
-                    {announcement.pinned && "📌 "}{announcement.title}
-                  </Text>
-                  <Text style={[styles.announcementBody, { color: colors.textMuted }]}>
-                    {announcement.content}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                    {new Date(announcement.date).toLocaleDateString()}
-                  </Text>
-                </View>
+          <View
+            style={[
+              styles.announcementCard,
+              {
+                backgroundColor: '#fff7ed', // Orange-50
+                borderColor: '#fdba74', // Orange-300
+                borderLeftWidth: 4,
+                borderLeftColor: '#f97316' // Orange-500
+              }
+            ]}
+          >
+            <View style={[
+              styles.announcementIcon,
+              {
+                backgroundColor: '#f97316' // Orange-500
+              }
+            ]}>
+              {announcements[0].pinned ? (
+                <Megaphone size={20} color="#fff" />
+              ) : (
+                <Megaphone size={20} color="#fff" />
+              )}
+            </View>
+            <View style={styles.announcementTextContent}>
+              <Text style={[styles.announcementTitle, { color: colors.text }]}>
+                {announcements[0].pinned && "📌 "}{announcements[0].title}
+              </Text>
+              <Text style={[styles.announcementBody, { color: colors.textMuted }]}>
+                {announcements[0].content}
+              </Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                  {new Date(announcements[0].date).toLocaleDateString()}
+                </Text>
+                <Pressable onPress={() => router.push('/announcements')}>
+                  <Text style={{ color: colors.primary, fontWeight: '600' }}>See More</Text>
+                </Pressable>
               </View>
-            ))}
+            </View>
           </View>
         )}
 
