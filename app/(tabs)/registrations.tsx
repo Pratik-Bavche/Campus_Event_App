@@ -13,6 +13,7 @@ import {
     useColorScheme,
     View,
 } from "react-native";
+
 import { Card } from "../../components/ui/Card";
 import { Colors } from "../../constants/theme";
 import { useDataStore } from "../../store/useDataStore";
@@ -42,7 +43,7 @@ export default function RegistrationsScreen() {
 
   const tabs = ["All", "Completed", "Cancelled"];
 
-  const filteredRegistrations = myRegistrations.filter((reg) => {
+  const filteredRegistrations = myRegistrations.filter((reg: any) => {
     if (selectedTab === "All") return reg.status !== "cancelled";
     if (selectedTab === "Completed")
       return (
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: "row",
-    backgroundColor: "rgba(0,0,0,0.05)",
+    backgroundColor: "transparent",
     padding: 4,
     borderRadius: 14,
     gap: 4,
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
-    paddingTop: 0,
+    paddingTop: 16,
     paddingBottom: 100,
   },
   regCard: {
