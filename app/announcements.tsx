@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 24,
+        paddingBottom: 100,
         gap: 16,
     },
     announcementCard: {
