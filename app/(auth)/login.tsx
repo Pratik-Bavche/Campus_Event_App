@@ -1,7 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import { ChevronRight, GraduationCap, Hash, Lock, Mail } from 'lucide-react-native';
+import { ChevronRight, GraduationCap, Hash, Lock } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
     Dimensions,
@@ -36,7 +36,7 @@ export default function LoginScreen() {
     const colors = Colors[theme];
 
     const handleLogin = async () => {
-        if (!email || !password || !rollNumber) {
+        if (!password || !rollNumber) {
             setError('Please fill in all mandatory fields');
             return;
         }
@@ -45,10 +45,10 @@ export default function LoginScreen() {
         setError('');
 
         try {
-            const { token, user } = await authService.login(email, rollNumber, password);
+            const { token, user } = await authService.login('', rollNumber, password);
 
-            await SecureStore.setItemAsync('auth_token', token);
-            await SecureStore.setItemAsync('user_data', JSON.stringify(user));
+            await AsyncStorage.setItem('auth_token', token);
+            await AsyncStorage.setItem('user_data', JSON.stringify(user));
 
             setToken(token);
             setUser(user);
@@ -91,6 +91,7 @@ export default function LoginScreen() {
                             <View style={[styles.titleSeparator, { backgroundColor: colors.primary }]} />
                         </View>
 
+                        {/* 
                         <Input
                             label="College Email"
                             placeholder="student@college.edu"
@@ -99,7 +100,8 @@ export default function LoginScreen() {
                             keyboardType="email-address"
                             autoCapitalize="none"
                             icon={<Mail size={20} color={colors.textMuted} />}
-                        />
+                        /> 
+                        */}
 
                         <Input
                             label="Roll Number"

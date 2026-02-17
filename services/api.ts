@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Config } from '../constants/Config';
 import { Announcement, Event, Notification, Registration, User } from '../types';
 import { mockAnnouncements, mockEvents, mockNotifications, mockRegistrations, mockUser } from './mockData';
+import { supabase } from './supabase';
 
 // In a real app, this would be your base URL from env
 const API_BASE_URL = Config.API_BASE_URL;
@@ -16,20 +17,60 @@ const isDevelopment = Config.IS_DEVELOPMENT;
 
 export const authService = {
     login: async (email: string, rollNumber: string, password: string): Promise<{ token: string; user: User }> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network lag
-            return { token: 'mock-jwt-token', user: mockUser };
-        }
-        const response = await api.post('/login', { email, rollNumber, password });
-        return response.data;
+        // For testing: Use roll number to generate a consistent dummy email
+        const internalEmail = `${rollNumber.toLowerCase()}@test.com`;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: internalEmail,
+            password: password,
+        });
+
+        if (error) throw error;
+
+        const { data: userData, error: userError } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+        if (userError) throw userError;
+
+        return { token: data.session?.access_token || '', user: userData as User };
     },
     register: async (email: string, rollNumber: string, password: string, name: string, department: string, year: string, phoneNumber: string): Promise<{ token: string; user: User }> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return { token: 'mock-jwt-token', user: { ...mockUser, email, rollNumber, name, department, year, phoneNumber } };
+        // For testing: Use roll number to generate a consistent dummy email
+        const internalEmail = `${rollNumber.toLowerCase()}@test.com`;
+
+        const { data, error } = await supabase.auth.signUp({
+            email: internalEmail,
+            password: password,
+        });
+
+        if (error) throw error;
+
+        // Convert FE/SE/TE/BE or string year to number 1-5
+        let yearNumber = parseInt(year);
+        if (isNaN(yearNumber)) {
+            const yearMap: { [key: string]: number } = { 'FE': 1, 'SE': 2, 'TE': 3, 'BE': 4 };
+            yearNumber = yearMap[year.toUpperCase()] || 1;
         }
-        const response = await api.post('/register', { email, rollNumber, password, name, department, year, phoneNumber });
-        return response.data;
+
+        const newUser: User = {
+            id: data.user?.id || '',
+            full_name: name,
+            roll_number: rollNumber,
+            mobile_number: phoneNumber,
+            department,
+            year: yearNumber,
+        };
+
+        const { error: insertError } = await supabase
+            .from('students')
+            .insert([newUser]);
+
+        if (insertError) throw insertError;
+
+        return { token: data.session?.access_token || '', user: newUser };
     },
 };
 
@@ -114,20 +155,66 @@ export const announcementService = {
 
 export const profileService = {
     getMe: async (): Promise<User> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            return mockUser;
-        }
-        const response = await api.get('/me');
-        return response.data;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (error) throw error;
+        return data as User;
     },
     updateProfile: async (data: Partial<User>): Promise<User> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return { ...mockUser, ...data };
-        }
-        const response = await api.put('/me', data);
-        return response.data;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const { data: updatedData, error } = await supabase
+            .from('students')
+            .update(data)
+            .eq('id', user.id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return updatedData as User;
+    },
+    uploadAvatar: async (uri: string): Promise<string> => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+
+        const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const formData = new FormData();
+        formData.append('file', {
+            uri: uri,
+            name: fileName,
+            type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
+        } as any);
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, formData, {
+                upsert: true
+            });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+        // Update student profile with new avatar URL
+        await supabase
+            .from('students')
+            .update({ profile_image: data.publicUrl })
+            .eq('id', user.id);
+
+        return data.publicUrl;
     },
 };
 

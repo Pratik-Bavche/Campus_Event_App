@@ -1,6 +1,7 @@
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Info, LogOut, X } from 'lucide-react-native';
+import { Camera, ChevronRight, Info, LogOut, X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
     Alert,
@@ -17,6 +18,7 @@ import {
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { Colors } from '../../constants/theme';
+import { profileService } from '../../services/api';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useDataStore } from '../../store/useDataStore';
 
@@ -79,11 +81,11 @@ export default function ProfileScreen() {
     // Edit Modal State
     const [isEditModalVisible, setEditModalVisible] = useState(false);
     const [editForm, setEditForm] = useState({
-        name: user?.name || '',
-        rollNumber: user?.rollNumber || '',
-        phoneNumber: user?.phoneNumber || '+91 98765 43210',
-        department: user?.department || 'Computer Science',
-        year: user?.year || '3rd Year'
+        full_name: user?.full_name || '',
+        roll_number: user?.roll_number || '',
+        mobile_number: user?.mobile_number || '',
+        department: user?.department || '',
+        year: user?.year || 1
     });
 
     const handleLogout = () => {
@@ -106,11 +108,44 @@ export default function ProfileScreen() {
 
     const handleUpdateProfile = async () => {
         try {
-            await updateUser(editForm);
+            // Convert FE/SE/TE/BE etc to number if needed before sending to updateUser
+            // In this specific component, editForm.year is handled by chips, but let's ensure it's number
+            const updates = {
+                ...editForm,
+                year: typeof editForm.year === 'number' ? editForm.year : 1
+            };
+            await updateUser(updates as Partial<any>);
             setEditModalVisible(false);
             Alert.alert('Success', 'Profile updated successfully');
         } catch (error) {
             Alert.alert('Error', 'Failed to update profile');
+        }
+    };
+
+    const handleImagePick = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (status !== 'granted') {
+            Alert.alert('Permission Denied', 'We need camera roll permissions to change your profile picture.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.7,
+        });
+
+        if (!result.canceled && result.assets[0].uri) {
+            try {
+                const publicUrl = await profileService.uploadAvatar(result.assets[0].uri);
+                await updateUser({ profile_image: publicUrl });
+                Alert.alert('Success', 'Profile picture updated!');
+            } catch (error) {
+                console.error(error);
+                Alert.alert('Error', 'Failed to upload image. Make sure an "avatars" bucket exists in Supabase Storage and is public.');
+            }
         }
     };
 
@@ -146,11 +181,11 @@ export default function ProfileScreen() {
                         <Pressable
                             onPress={() => {
                                 setEditForm({
-                                    name: user?.name || '',
-                                    rollNumber: user?.rollNumber || '',
-                                    phoneNumber: user?.phoneNumber || '+91 98765 43210',
-                                    department: user?.department || 'Computer Science',
-                                    year: user?.year || '3rd Year'
+                                    full_name: user?.full_name || '',
+                                    roll_number: user?.roll_number || '',
+                                    mobile_number: user?.mobile_number || '',
+                                    department: user?.department || '',
+                                    year: user?.year || 1
                                 });
                                 setEditModalVisible(true);
                             }}
@@ -171,25 +206,30 @@ export default function ProfileScreen() {
                     {/* Profile Card */}
                     <View style={[styles.profileCard, { backgroundColor: colors.card }]}>
                         <View style={styles.avatarWrapper}>
-                            <View style={styles.avatarShadow}>
+                            <Pressable
+                                onPress={handleImagePick}
+                                style={styles.avatarShadow}
+                            >
                                 <Image
-                                    source={{ uri: `https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=200&q=80` }}
+                                    source={{ uri: user?.profile_image || `https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=200&q=80` }}
                                     style={styles.avatar}
                                 />
-                            </View>
+                                <View style={[styles.cameraIconContainer, { backgroundColor: colors.primary }]}>
+                                    <Camera size={16} color="#fff" />
+                                </View>
+                            </Pressable>
                         </View>
 
                         <View style={styles.infoFields}>
-                            <InfoField label="Full Name" value={user?.name || 'User'} colors={colors} />
-                            <InfoField label="Email Address" value={user?.email || 'user@college.edu'} colors={colors} />
-                            <InfoField label="Roll Number" value={user?.rollNumber || 'N/A'} colors={colors} />
+                            <InfoField label="Full Name" value={user?.full_name || 'User'} colors={colors} />
+                            <InfoField label="Roll Number" value={user?.roll_number || 'N/A'} colors={colors} />
 
                             <View style={styles.row}>
                                 <InfoField label="Department" value={user?.department || 'Not Set'} halfWidth colors={colors} />
-                                <InfoField label="Year" value={user?.year || 'Not Set'} halfWidth colors={colors} />
+                                <InfoField label="Year" value={user?.year ? `${user.year} Year` : 'Not Set'} halfWidth colors={colors} />
                             </View>
 
-                            <InfoField label="Phone Number" value={user?.phoneNumber || 'Not Set'} colors={colors} />
+                            <InfoField label="Phone Number" value={user?.mobile_number || 'Not Set'} colors={colors} />
                         </View>
                     </View>
 
@@ -259,8 +299,8 @@ export default function ProfileScreen() {
                             <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
                             <TextInput
                                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-                                value={editForm.name}
-                                onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
+                                value={editForm.full_name}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, full_name: text }))}
                                 placeholder="Enter your name"
                                 placeholderTextColor={colors.textMuted}
                             />
@@ -268,8 +308,8 @@ export default function ProfileScreen() {
                             <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Roll Number</Text>
                             <TextInput
                                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-                                value={editForm.rollNumber}
-                                onChangeText={(text) => setEditForm(prev => ({ ...prev, rollNumber: text }))}
+                                value={editForm.roll_number}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, roll_number: text }))}
                                 placeholder="Enter roll number"
                                 placeholderTextColor={colors.textMuted}
                             />
@@ -288,21 +328,26 @@ export default function ProfileScreen() {
                                 <View style={{ flex: 1, marginLeft: 8 }}>
                                     <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Year</Text>
                                     <View style={styles.yearSelectionGrid}>
-                                        {['FE', 'SE', 'TE', 'BE'].map((yr) => (
+                                        {[
+                                            { label: 'FE', value: 1 },
+                                            { label: 'SE', value: 2 },
+                                            { label: 'TE', value: 3 },
+                                            { label: 'BE', value: 4 }
+                                        ].map((yr) => (
                                             <Pressable
-                                                key={yr}
-                                                onPress={() => setEditForm(prev => ({ ...prev, year: yr }))}
+                                                key={yr.label}
+                                                onPress={() => setEditForm(prev => ({ ...prev, year: yr.value }))}
                                                 style={[
                                                     styles.yearChip,
                                                     { borderColor: colors.border },
-                                                    editForm.year === yr && { backgroundColor: colors.primary, borderColor: colors.primary }
+                                                    editForm.year === yr.value && { backgroundColor: colors.primary, borderColor: colors.primary }
                                                 ]}
                                             >
                                                 <Text style={[
                                                     styles.yearChipText,
                                                     { color: colors.text },
-                                                    editForm.year === yr && { color: '#fff' }
-                                                ]}>{yr}</Text>
+                                                    editForm.year === yr.value && { color: '#fff' }
+                                                ]}>{yr.label}</Text>
                                             </Pressable>
                                         ))}
                                     </View>
@@ -312,8 +357,8 @@ export default function ProfileScreen() {
                             <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Phone Number</Text>
                             <TextInput
                                 style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-                                value={editForm.phoneNumber}
-                                onChangeText={(text) => setEditForm(prev => ({ ...prev, phoneNumber: text }))}
+                                value={editForm.mobile_number}
+                                onChangeText={(text) => setEditForm(prev => ({ ...prev, mobile_number: text }))}
                                 placeholder="Phone number"
                                 keyboardType="phone-pad"
                                 placeholderTextColor={colors.textMuted}
@@ -396,6 +441,18 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
+    },
+    cameraIconContainer: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#fff',
     },
     infoFields: {
         gap: 16,

@@ -1,12 +1,13 @@
 export interface User {
     id: string;
-    email: string;
-    name: string;
-    rollNumber: string;
-    role: 'student';
-    phoneNumber?: string;
+    full_name: string;
+    roll_number: string;
+    mobile_number?: string;
     department?: string;
-    year?: string;
+    year: number;
+    profile_image?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface Club {

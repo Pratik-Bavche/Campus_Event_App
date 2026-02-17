@@ -1,7 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import { BookOpen, Calendar, GraduationCap, Hash, Lock, Mail, Phone, User } from 'lucide-react-native';
+import { BookOpen, Calendar, GraduationCap, Hash, Lock, Phone, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
     Dimensions,
@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Colors } from '../../constants/theme';
 import { authService } from '../../services/api';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -39,23 +40,41 @@ export default function SignupScreen() {
     const theme = useColorScheme() ?? 'light';
     const colors = Colors[theme];
 
+    const branchOptions = [
+        { label: 'Computer Engineering', value: 'Computer' },
+        { label: 'Information Technology', value: 'IT' },
+        { label: 'Electronics & Telecommunication', value: 'ENTC' },
+        { label: 'Mechanical Engineering', value: 'Mechanical' },
+        { label: 'Civil Engineering', value: 'Civil' },
+        { label: 'Instrumentation', value: 'Instrumentation' },
+    ];
+
+    const yearOptions = [
+        { label: 'First Year (FE)', value: 'FE' },
+        { label: 'Second Year (SE)', value: 'SE' },
+        { label: 'Third Year (TE)', value: 'TE' },
+        { label: 'Fourth Year (BE)', value: 'BE' },
+    ];
+
     const handleSignup = async () => {
-        if (!name || !email || !rollNumber || !password || !branch || !year || !phoneNumber) {
+        if (!name || !rollNumber || !password || !branch || !year || !phoneNumber) {
             setError('All fields are mandatory');
             return;
         }
 
+        /* 
         if (!email.endsWith('.edu')) {
             setError('Please use your college email address');
             // return; // Commented for testing flexibility
         }
+        */
 
         setIsLoading(true);
         setError('');
 
         try {
             const { token, user } = await authService.register(
-                email,
+                '', // Email is now handled internally by rollNumber for testing
                 rollNumber,
                 password,
                 name,
@@ -64,8 +83,8 @@ export default function SignupScreen() {
                 phoneNumber
             );
 
-            await SecureStore.setItemAsync('auth_token', token);
-            await SecureStore.setItemAsync('user_data', JSON.stringify(user));
+            await AsyncStorage.setItem('auth_token', token);
+            await AsyncStorage.setItem('user_data', JSON.stringify(user));
 
             setToken(token);
             setUser(user);
@@ -110,6 +129,7 @@ export default function SignupScreen() {
                             icon={<User size={20} color={colors.textMuted} />}
                         />
 
+                        {/* 
                         <Input
                             label="College Email"
                             placeholder="student@college.edu"
@@ -118,7 +138,8 @@ export default function SignupScreen() {
                             keyboardType="email-address"
                             autoCapitalize="none"
                             icon={<Mail size={20} color={colors.textMuted} />}
-                        />
+                        /> 
+                        */}
 
                         <View style={styles.row}>
                             <View style={{ flex: 1, marginRight: 8 }}>
@@ -145,20 +166,22 @@ export default function SignupScreen() {
 
                         <View style={styles.row}>
                             <View style={{ flex: 1, marginRight: 8 }}>
-                                <Input
+                                <Select
                                     label="Branch"
-                                    placeholder="Comp / IT / Entc"
+                                    placeholder="Select Branch"
                                     value={branch}
-                                    onChangeText={setBranch}
+                                    onSelect={setBranch}
+                                    options={branchOptions}
                                     icon={<BookOpen size={20} color={colors.textMuted} />}
                                 />
                             </View>
                             <View style={{ flex: 1, marginLeft: 8 }}>
-                                <Input
+                                <Select
                                     label="Year"
-                                    placeholder="FE / SE / TE / BE"
+                                    placeholder="Select Year"
                                     value={year}
-                                    onChangeText={setYear}
+                                    onSelect={setYear}
+                                    options={yearOptions}
                                     icon={<Calendar size={20} color={colors.textMuted} />}
                                 />
                             </View>

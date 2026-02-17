@@ -2,10 +2,11 @@ import { Announcement, Event, Notification, Registration, User } from '../types'
 
 export const mockUser: User = {
     id: '1',
-    email: 'student@college.edu',
-    name: 'John Doe',
-    rollNumber: 'CS2023001',
-    role: 'student',
+    full_name: 'John Doe',
+    roll_number: 'CS2023001',
+    mobile_number: '+91 98765 43210',
+    department: 'Computer Science',
+    year: 3,
 };
 
 export const mockEvents: Event[] = [

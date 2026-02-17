@@ -1,5 +1,6 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { profileService } from '../services/api';
 import { User } from '../types';
 
 interface AuthState {
@@ -24,20 +25,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     updateUser: async (data) => {
         const currentUser = get().user;
         if (currentUser) {
-            const updatedUser = { ...currentUser, ...data };
-            await SecureStore.setItemAsync('user_data', JSON.stringify(updatedUser));
+            // Update in Supabase
+            const updatedUser = await profileService.updateProfile(data);
+
+            // Update in Local Storage
+            await AsyncStorage.setItem('user_data', JSON.stringify(updatedUser));
+
+            // Update in Global State
             set({ user: updatedUser });
         }
     },
     logout: async () => {
-        await SecureStore.deleteItemAsync('auth_token');
-        await SecureStore.deleteItemAsync('user_data');
+        await AsyncStorage.removeItem('auth_token');
+        await AsyncStorage.removeItem('user_data');
         set({ user: null, token: null, isAuthenticated: false });
     },
     initialize: async () => {
         try {
-            const token = await SecureStore.getItemAsync('auth_token');
-            const userData = await SecureStore.getItemAsync('user_data');
+            const token = await AsyncStorage.getItem('auth_token');
+            const userData = await AsyncStorage.getItem('user_data');
             if (token && userData) {
                 set({
                     token,
