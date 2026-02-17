@@ -5,6 +5,7 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -111,8 +112,25 @@ export default function EventsScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Curved Blue Header */}
+            <View style={{
+                backgroundColor: colors.primary,
+                paddingTop: Platform.OS === 'ios' ? 60 : 60,
+                paddingBottom: 24,
+                paddingHorizontal: 24,
+                borderBottomLeftRadius: 30,
+                borderBottomRightRadius: 30,
+                elevation: 4,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+            }}>
+                <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#fff' }}>All Events</Text>
+            </View>
+
+            {/* Search and Filters */}
             <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>All Events</Text>
                 <Input
                     placeholder="Search events or clubs..."
                     value={searchQuery}
@@ -188,7 +206,6 @@ export default function EventsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: 60,
     },
     header: {
         paddingHorizontal: 24,

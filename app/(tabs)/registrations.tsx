@@ -178,8 +178,21 @@ export default function RegistrationsScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>My Registrations</Text>
+            {/* Curved Blue Header */}
+            <View style={{
+                backgroundColor: colors.primary,
+                paddingTop: Platform.OS === 'ios' ? 60 : 60,
+                paddingBottom: 24,
+                paddingHorizontal: 24,
+                borderBottomLeftRadius: 30,
+                borderBottomRightRadius: 30,
+                elevation: 4,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+            }}>
+                <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 20 }}>My Registrations</Text>
                 <View style={styles.tabContainer}>
                     {tabs.map((tab) => (
                         <Pressable
@@ -188,12 +201,12 @@ export default function RegistrationsScreen() {
                             style={({ pressed }) => [
                                 styles.tab,
                                 {
-                                    backgroundColor: selectedTab === tab ? colors.primary : colors.border,
+                                    backgroundColor: selectedTab === tab ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
                                 },
                                 { transform: [{ scale: pressed ? 0.95 : 1 }] }
                             ]}
                         >
-                            <Text style={[styles.tabText, { color: selectedTab === tab ? '#fff' : colors.textMuted }]}>
+                            <Text style={[styles.tabText, { color: '#fff' }]}>
                                 {tab}
                             </Text>
                         </Pressable>
