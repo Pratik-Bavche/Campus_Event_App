@@ -31,7 +31,7 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarButton: (props) => <TabButton {...props} />,
         tabBarStyle: {
-          backgroundColor: colors.card,
+          backgroundColor: theme === 'dark' ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           borderTopColor: colors.border,
           height: 65,
           paddingBottom: 10,
@@ -42,10 +42,12 @@ export default function TabLayout() {
           elevation: 10,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
+          shadowOpacity: 0.1,
           shadowRadius: 10,
           borderTopWidth: 0,
           position: 'absolute',
+          borderWidth: 1,
+          borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
         },
         tabBarLabelStyle: {
           fontSize: 12,
