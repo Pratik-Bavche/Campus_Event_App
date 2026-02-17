@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { Config } from '../constants/Config';
 import { Announcement, Event, Notification, Registration, User } from '../types';
-import { mockAnnouncements, mockEvents, mockNotifications, mockRegistrations, mockUser } from './mockData';
 import { supabase } from './supabase';
 
 // In a real app, this would be your base URL from env
@@ -12,16 +11,10 @@ const api = axios.create({
     timeout: 5000,
 });
 
-// Mocking API responses for development
-const isDevelopment = Config.IS_DEVELOPMENT;
-
 export const authService = {
     login: async (email: string, rollNumber: string, password: string): Promise<{ token: string; user: User }> => {
-        // For testing: Use roll number to generate a consistent dummy email
-        const internalEmail = `${rollNumber.toLowerCase()}@test.com`;
-
         const { data, error } = await supabase.auth.signInWithPassword({
-            email: internalEmail,
+            email: email,
             password: password,
         });
 
@@ -38,11 +31,8 @@ export const authService = {
         return { token: data.session?.access_token || '', user: userData as User };
     },
     register: async (email: string, rollNumber: string, password: string, name: string, department: string, year: string, phoneNumber: string): Promise<{ token: string; user: User }> => {
-        // For testing: Use roll number to generate a consistent dummy email
-        const internalEmail = `${rollNumber.toLowerCase()}@test.com`;
-
         const { data, error } = await supabase.auth.signUp({
-            email: internalEmail,
+            email: email,
             password: password,
         });
 
@@ -76,80 +66,213 @@ export const authService = {
 
 export const eventService = {
     getEvents: async (): Promise<Event[]> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            return mockEvents;
+        const { data, error } = await supabase
+            .from('events')
+            .select('*')
+            .order('date_time', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching events:', error);
+            throw error;
         }
-        const response = await api.get('/events');
-        return response.data;
+
+        return data.map((e: any) => ({
+            id: e.id,
+            name: e.title,
+            club: 'Student Club',
+            clubId: e.club_id,
+            description: e.description,
+            rules: e.eligibility || 'No specific rules available.',
+            venue: e.venue || 'To be announced',
+            date: e.date_time,
+            deadline: e.registration_deadline || e.date_time, // Fallback to event date if no deadline
+            poster: e.poster_url || 'https://via.placeholder.com/400x200',
+            isClosed: e.status !== 'ACTIVE',
+            registrationType: 'individual', // Defaulting as logic needs clarification
+            status: e.status === 'ACTIVE' ? 'Open' : 'Closed',
+            maxCapacity: e.event_limit,
+            representativePhone: e.contact_person || '',
+        }));
     },
     getEventById: async (id: string): Promise<Event> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            const event = mockEvents.find(e => e.id === id);
-            if (!event) throw new Error('Event not found');
-            return event;
+        const { data: e, error } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('Error fetching event details:', error);
+            throw error;
         }
-        const response = await api.get(`/events/${id}`);
-        return response.data;
+
+        return {
+            id: e.id,
+            name: e.title,
+            club: 'Student Club',
+            clubId: e.club_id,
+            description: e.description,
+            rules: e.eligibility || 'No specific rules available.',
+            venue: e.venue || 'To be announced',
+            date: e.date_time,
+            deadline: e.registration_deadline || e.date_time,
+            poster: e.poster_url || 'https://via.placeholder.com/400x200',
+            isClosed: e.status !== 'ACTIVE',
+            registrationType: 'individual',
+            status: e.status === 'ACTIVE' ? 'Open' : 'Closed',
+            maxCapacity: e.event_limit,
+            representativePhone: e.contact_person || '',
+        };
     },
     registerForEvent: async (eventId: string, details: any): Promise<Registration> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            const event = mockEvents.find(e => e.id === eventId);
-            if (!event) throw new Error('Event not found');
-            return {
-                id: Math.random().toString(36).substr(2, 9),
-                eventId,
-                event,
-                studentId: mockUser.id,
-                registrationDate: new Date().toISOString(),
-                status: 'confirmed',
-                ...details,
-            };
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !user.email) throw new Error('User not authenticated');
+
+        // Fetch student profile details needed for registration table
+        const { data: profile, error: profileError } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError || !profile) {
+            console.error('Error fetching student profile for registration:', profileError);
+            throw new Error('Could not fetch student profile. Please update your profile first.');
         }
-        const response = await api.post(`/events/${eventId}/register`, details);
-        return response.data;
+
+        const { data, error } = await supabase
+            .from('registrations')
+            .insert({
+                event_id: eventId,
+                roll_no: profile.roll_number,
+                name: profile.full_name,
+                email: user.email,
+                department: profile.department,
+                year: profile.year?.toString(),
+                status: 'REGISTERED',
+                ...details
+            })
+            .select(`
+                *,
+                events (*)
+            `)
+            .single();
+
+        if (error) {
+            console.error('Registration error:', error);
+            throw error;
+        }
+
+        return {
+            id: data.id,
+            eventId: data.event_id,
+            event: { ...data.events, name: data.events.title } as any,
+            studentId: user.id,
+            registrationDate: data.registered_at || new Date().toISOString(),
+            status: 'confirmed',
+        };
     },
 };
 
 export const registrationService = {
     getMyRegistrations: async (): Promise<Registration[]> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            return mockRegistrations;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !user.email) return [];
+
+        try {
+            // Filter by email as per new schema
+            const { data, error } = await supabase
+                .from('registrations')
+                .select(`
+                    *,
+                    events (*)
+                `)
+                .eq('email', user.email);
+
+            if (error) {
+                console.warn('Error fetching registrations:', error.message);
+                return [];
+            }
+
+            return data.map((r: any) => ({
+                id: r.id,
+                eventId: r.event_id,
+                studentId: user.id, // Consistent with frontend user state
+                registrationDate: r.registered_at,
+                status: r.status === 'REGISTERED' ? 'confirmed' : 'pending',
+                event: {
+                    id: r.events.id,
+                    name: r.events.title,
+                    club: 'Student Club',
+                    clubId: r.events.club_id,
+                    description: r.events.description,
+                    rules: r.events.eligibility,
+                    venue: r.events.venue,
+                    date: r.events.date_time,
+                    deadline: r.events.registration_deadline,
+                    poster: r.events.poster_url,
+                    isClosed: r.events.status !== 'ACTIVE',
+                    registrationType: 'individual',
+                    status: r.events.status === 'ACTIVE' ? 'Open' : 'Closed',
+                    maxCapacity: r.events.event_limit,
+                    representativePhone: r.events.contact_person
+                }
+            }));
+        } catch (e) {
+            console.warn('Exception fetching registrations:', e);
+            return [];
         }
-        const response = await api.get('/my-registrations');
-        return response.data;
     },
     cancelRegistration: async (registrationId: string): Promise<void> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            return;
-        }
-        await api.delete(`/registrations/${registrationId}`);
+        const { error } = await supabase
+            .from('registrations')
+            .delete()
+            .eq('id', registrationId);
+
+        if (error) throw error;
     },
 };
 
 export const notificationService = {
     getNotifications: async (): Promise<Notification[]> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            return mockNotifications;
+        // Attempt to fetch from notifications table if it exists
+        const { data, error } = await supabase
+            .from('notifications')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.warn('Notifications table might not exist or empty', error);
+            return [];
         }
-        const response = await api.get('/notifications');
-        return response.data;
+        return data.map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            message: n.content || n.message,
+            type: n.type || 'announcement',
+            date: n.created_at,
+            isRead: n.is_read || false
+        }));
     },
 };
 
 export const announcementService = {
     getAnnouncements: async (): Promise<Announcement[]> => {
-        if (isDevelopment) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            return mockAnnouncements;
+        const { data, error } = await supabase
+            .from('announcements')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.warn('Announcements table might not exist', error);
+            return [];
         }
-        const response = await api.get('/announcements');
-        return response.data;
+        return data.map((a: any) => ({
+            id: a.id,
+            title: a.title,
+            content: a.content,
+            date: a.created_at
+        }));
     },
 };
 
@@ -189,33 +312,44 @@ export const profileService = {
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        const formData = new FormData();
-        formData.append('file', {
-            uri: uri,
-            name: fileName,
-            type: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
-        } as any);
+        // Fetch the file from the URI and convert to ArrayBuffer
+        // This is more reliable for Supabase Storage in React Native than FormData
+        const response = await fetch(uri);
+        const arrayBuffer = await response.arrayBuffer();
 
         const { error: uploadError } = await supabase.storage
             .from('avatars')
-            .upload(filePath, formData, {
+            .upload(filePath, arrayBuffer, {
+                contentType: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
                 upsert: true
             });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+            console.error('Upload Error Details:', uploadError);
+            if (uploadError.message.includes('row-level security') || uploadError.message.includes('new row violates')) {
+                throw new Error('Permission Denied: Please enable "INSERT" policies for the "avatars" bucket in your Supabase Dashboard to allow uploads.');
+            }
+            throw uploadError;
+        }
 
         const { data } = supabase.storage
             .from('avatars')
             .getPublicUrl(filePath);
 
         // Update student profile with new avatar URL
-        await supabase
+        const { error: updateError } = await supabase
             .from('students')
             .update({ profile_image: data.publicUrl })
             .eq('id', user.id);
+
+        if (updateError) {
+            console.error('Profile Update Error:', updateError);
+            throw updateError;
+        }
 
         return data.publicUrl;
     },
 };
 
 export default api;
+

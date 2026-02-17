@@ -38,7 +38,7 @@ export const useDataStore = create<DataState>((set, get) => ({
             set({ events, isEventsLoading: false });
         } catch (error) {
             set({ isEventsLoading: false });
-            console.error('Fetch events error', error);
+            console.warn('Fetch events error', error);
         }
     },
 
@@ -49,7 +49,7 @@ export const useDataStore = create<DataState>((set, get) => ({
             set({ myRegistrations: registrations, isRegistrationsLoading: false });
         } catch (error) {
             set({ isRegistrationsLoading: false });
-            console.error('Fetch registrations error', error);
+            console.warn('Fetch registrations error', error);
         }
     },
 
@@ -60,7 +60,7 @@ export const useDataStore = create<DataState>((set, get) => ({
             set({ notifications, isNotificationsLoading: false });
         } catch (error) {
             set({ isNotificationsLoading: false });
-            console.error('Fetch notifications error', error);
+            console.warn('Fetch notifications error', error);
         }
     },
 
@@ -71,7 +71,7 @@ export const useDataStore = create<DataState>((set, get) => ({
             set({ announcements, isAnnouncementsLoading: false });
         } catch (error) {
             set({ isAnnouncementsLoading: false });
-            console.error('Fetch announcements error', error);
+            console.warn('Fetch announcements error', error);
         }
     },
     cancelRegistration: async (id) => {

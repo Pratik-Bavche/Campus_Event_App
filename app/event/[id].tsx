@@ -19,6 +19,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Colors } from '../../constants/theme';
 import { eventService } from '../../services/api';
+import { useDataStore } from '../../store/useDataStore';
 import { Event } from '../../types';
 
 const { width } = Dimensions.get('window');
@@ -27,11 +28,13 @@ export default function EventDetailsScreen() {
     const { id } = useLocalSearchParams();
     const [event, setEvent] = useState<Event | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const { myRegistrations, fetchRegistrations } = useDataStore();
 
     const router = useRouter();
     const theme = useColorScheme() ?? 'light';
     const colors = Colors[theme];
 
+    // Fetch event details
     useEffect(() => {
         const fetchEvent = async () => {
             try {
@@ -45,6 +48,11 @@ export default function EventDetailsScreen() {
         };
         fetchEvent();
     }, [id]);
+
+    // Fetch updated registrations
+    useEffect(() => {
+        fetchRegistrations();
+    }, []);
 
     const handleDownloadCertificate = () => {
         Alert.alert(
@@ -72,7 +80,11 @@ export default function EventDetailsScreen() {
     }
 
     const isDeadlinePassed = new Date(event.deadline) < new Date();
-    const canRegister = event.status === 'Open' && !isDeadlinePassed;
+    // Certificate available only after event has started/happened AND deadline passed
+    const isEventCompleted = new Date(event.date) < new Date() && new Date(event.deadline) < new Date();
+    // Check using loose comparison for ID in case of string/number mismatch, though both should be strings
+    const isRegistered = myRegistrations.some(r => r.eventId == event.id);
+    const canRegister = event.status === 'Open' && !isDeadlinePassed && !isRegistered;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -187,16 +199,30 @@ export default function EventDetailsScreen() {
             </ScrollView>
 
             <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
-                {new Date(event.date) <= new Date() ? (
+                {isRegistered && isEventCompleted ? (
                     <Button
                         title="Download Certificate"
                         onPress={handleDownloadCertificate}
                         style={{ ...styles.registerButton, backgroundColor: '#10b981' }}
                         icon={<Award size={20} color="#fff" />}
                     />
+                ) : isRegistered ? (
+                    <Button
+                        title="Already Registered"
+                        disabled={true}
+                        onPress={() => { }}
+                        style={{ ...styles.registerButton, opacity: 0.7 }}
+                    />
+                ) : isDeadlinePassed ? (
+                    <Button
+                        title="Registration Closed"
+                        disabled={true}
+                        onPress={() => { }}
+                        style={{ ...styles.registerButton, opacity: 0.7 }}
+                    />
                 ) : (
                     <Button
-                        title={isDeadlinePassed ? "Registration Closed" : "Register Now"}
+                        title="Register Now"
                         disabled={!canRegister}
                         onPress={() => router.push(`/register/${event.id}`)}
                         style={styles.registerButton}
