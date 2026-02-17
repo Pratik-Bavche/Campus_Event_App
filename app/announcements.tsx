@@ -69,22 +69,33 @@ export default function AnnouncementsScreen() {
             {/* Custom Header */}
             <View style={{
                 backgroundColor: colors.primary,
-                paddingTop: 60,
-                paddingBottom: 20,
-                paddingHorizontal: 20,
+                paddingTop: Platform.OS === 'ios' ? 60 : 60, // Consistent top padding
+                paddingBottom: 24,
+                paddingHorizontal: 24,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 16,
                 elevation: 4,
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                borderBottomLeftRadius: 30,
+                borderBottomRightRadius: 30,
             }}>
                 <Pressable onPress={() => router.back()} style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
-                    <ArrowLeft size={24} color="#fff" />
+                    <View style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}>
+                        <ArrowLeft size={20} color="#fff" />
+                    </View>
                 </Pressable>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#fff' }}>Announcements</Text>
+                <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#fff' }}>Announcements</Text>
             </View>
 
             <FlatList
