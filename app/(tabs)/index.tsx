@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
     padding: 30,
   },
   announcementCarouselContainer: {
-    height: 180,
+    height: 130,
     marginHorizontal: 20,
     marginBottom: 12,
   },
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: "row",
     borderWidth: 1,
-    minHeight: 160,
+    minHeight: 110,
   },
   indicatorContainer: {
     flexDirection: "row",
