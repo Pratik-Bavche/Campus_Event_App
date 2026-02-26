@@ -1,19 +1,23 @@
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { ChevronRight, Megaphone } from "lucide-react-native";
+import { CheckCircle2, ChevronRight, Megaphone, QrCode, Scan, X } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    FlatList,
-    Image,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useColorScheme,
-    View,
+  Alert,
+  Animated,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View
 } from "react-native";
 import { Card } from "../../components/ui/Card";
 import { Colors } from "../../constants/theme";
@@ -35,6 +39,9 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = React.useState("All");
   const [filteredEvents, setFilteredEvents] = React.useState(events);
   const [currentAnnouncementIndex, setCurrentAnnouncementIndex] = useState(0);
+  const [showScanner, setShowScanner] = useState(false);
+  const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
@@ -129,6 +136,37 @@ export default function HomeScreen() {
     setFilteredEvents(filtered);
   }, [events, selectedCategory]);
 
+  const handleScanAttendance = async () => {
+    if (isAttendanceMarked) {
+      Alert.alert('Already Marked', 'Your attendance has already been recorded.');
+      return;
+    }
+
+    if (!permission) {
+      const { status } = await requestPermission();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera permission is needed to scan QR codes.');
+        return;
+      }
+    } else if (!permission.granted) {
+      const { status } = await requestPermission();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera permission is needed to scan QR codes.');
+        return;
+      }
+    }
+    setShowScanner(true);
+  };
+
+  const onBarCodeScanned = ({ data }: { data: string }) => {
+    setShowScanner(false);
+    setIsAttendanceMarked(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert('Attendance Marked', 'Your attendance has been successfully recorded!', [
+      { text: 'OK' }
+    ]);
+  };
+
   const popularEvents = [...events]
     .sort((a, b) => (b.registeredCount || 0) - (a.registeredCount || 0))
     .slice(0, 3);
@@ -210,7 +248,71 @@ export default function HomeScreen() {
               Discover amazing events
             </Animated.Text>
           </View>
+
+          <Pressable
+            onPress={handleScanAttendance}
+            style={({ pressed }) => [
+              styles.scannerButton,
+              isAttendanceMarked && styles.attendanceMarkedButton,
+              { transform: [{ scale: pressed ? 0.9 : 1 }] }
+            ]}
+          >
+            {isAttendanceMarked ? (
+              <CheckCircle2 size={24} color="#fff" />
+            ) : (
+              <Scan size={24} color="#fff" />
+            )}
+          </Pressable>
         </View>
+
+        {/* Attendance Scanner Modal */}
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={showScanner}
+          onRequestClose={() => setShowScanner(false)}
+        >
+          <View style={styles.scannerWrapper}>
+            <CameraView
+              style={StyleSheet.absoluteFillObject}
+              onBarcodeScanned={onBarCodeScanned}
+              barcodeScannerSettings={{
+                barcodeTypes: ["qr"],
+              }}
+            />
+
+            {/* Scanner Overlay */}
+            <View style={styles.overlay}>
+              <View style={styles.unfilled} />
+              <View style={{ flexDirection: 'row' }}>
+                <View style={styles.unfilled} />
+                <View style={styles.focused}>
+                  <View style={styles.scannerFrame} />
+                </View>
+                <View style={styles.unfilled} />
+              </View>
+              <View style={styles.unfilled} />
+            </View>
+
+            {/* UI Elements on top of camera */}
+            <View style={styles.scannerHeader}>
+              <Pressable
+                onPress={() => setShowScanner(false)}
+                style={styles.closeButton}
+              >
+                <X size={28} color="#fff" />
+              </Pressable>
+              <Text style={styles.scannerTitle}>Scan Attendance QR</Text>
+            </View>
+
+            <View style={styles.scannerFooter}>
+              <View style={styles.scannerHint}>
+                <QrCode size={20} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.scannerHintText}>Align QR code within the frame</Text>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         {/* Quick Stats Row */}
         <Animated.View style={[styles.statsRow, { opacity: fadeAnim }]}>
@@ -461,7 +563,7 @@ export default function HomeScreen() {
                       Math.ceil(
                         (new Date(event.deadline).getTime() -
                           new Date().getTime()) /
-                          (1000 * 60 * 60 * 24),
+                        (1000 * 60 * 60 * 24),
                       ),
                     )}{" "}
                     days left
@@ -519,6 +621,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 24,
     marginBottom: 24,
+    zIndex: 10,
+  },
+  scannerButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  attendanceMarkedButton: {
+    backgroundColor: '#22c55e', // Green-500
+    borderColor: '#4ade80', // Green-400
   },
   welcomeText: {
     fontSize: 28,
@@ -726,5 +843,73 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  scannerWrapper: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  scannerHeader: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
+  },
+  scannerFooter: {
+    position: 'absolute',
+    bottom: 60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  scannerHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 30,
+  },
+  scannerHintText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  unfilled: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  focused: {
+    width: 280,
+    height: 280,
+  },
+  scannerFrame: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 20,
+    backgroundColor: 'transparent',
   },
 });
