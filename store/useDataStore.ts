@@ -79,7 +79,7 @@ export const useDataStore = create<DataState>((set, get) => ({
             await registrationService.cancelRegistration(id);
             set((state) => ({
                 myRegistrations: state.myRegistrations.map((reg) =>
-                    reg.id === id ? { ...reg, status: 'cancelled' } : reg
+                    reg.id === id ? { ...reg, status: 'CANCELLED' } : reg
                 ),
             }));
         } catch (error) {

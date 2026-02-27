@@ -2,16 +2,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Award } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Image,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    useColorScheme,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
 } from "react-native";
 
 import { Card } from "../../components/ui/Card";
@@ -44,12 +44,12 @@ export default function RegistrationsScreen() {
   const tabs = ["All", "Completed", "Cancelled"];
 
   const filteredRegistrations = myRegistrations.filter((reg: any) => {
-    if (selectedTab === "All") return reg.status !== "cancelled";
+    if (selectedTab === "All") return reg.status !== "CANCELLED";
     if (selectedTab === "Completed")
       return (
-        new Date(reg.event.date) <= new Date() && reg.status !== "cancelled"
+        new Date(reg.event.date) <= new Date() && reg.status !== "CANCELLED"
       );
-    if (selectedTab === "Cancelled") return reg.status === "cancelled";
+    if (selectedTab === "Cancelled") return reg.status === "CANCELLED";
     return true;
   });
 
@@ -87,7 +87,7 @@ export default function RegistrationsScreen() {
   };
 
   const renderRegistrationItem = ({ item }: { item: any }) => {
-    const isCancelled = item.status === "cancelled";
+    const isCancelled = item.status === "CANCELLED";
     const isCompleted = new Date(item.event.date) <= new Date();
 
     return (

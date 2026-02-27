@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Config } from '../constants/Config';
-import { Announcement, Event, Notification, Registration, User } from '../types';
+import { Announcement, Attendance, Event, Notification, Registration, User } from '../types';
 import { supabase } from './supabase';
 
 // In a real app, this would be your base URL from env
@@ -30,7 +30,7 @@ export const authService = {
 
         return { token: data.session?.access_token || '', user: userData as User };
     },
-    register: async (email: string, rollNumber: string, password: string, name: string, department: string, year: string, phoneNumber: string): Promise<{ token: string; user: User }> => {
+    register: async (email: string, rollNumber: string, password: string, name: string, department: string, year: string, phoneNumber: string, division: string): Promise<{ token: string; user: User }> => {
         // Check if roll number already exists
         const { data: existingUser } = await supabase
             .from('students')
@@ -71,6 +71,7 @@ export const authService = {
             mobile_number: phoneNumber,
             department,
             year: yearNumber,
+            division,
         };
 
         const { error: insertError } = await supabase
@@ -163,6 +164,19 @@ export const eventService = {
             throw new Error('Could not fetch student profile. Please update your profile first.');
         }
 
+        // Check for existing registration
+        const { data: existingReg } = await supabase
+            .from('registrations')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('email', user.email)
+            .neq('status', 'CANCELLED')
+            .single();
+
+        if (existingReg) {
+            throw new Error('You are already registered for this event.');
+        }
+
         const { data, error } = await supabase
             .from('registrations')
             .insert({
@@ -172,6 +186,7 @@ export const eventService = {
                 email: user.email,
                 department: profile.department,
                 year: profile.year?.toString(),
+                division: profile.division,
                 status: 'REGISTERED',
                 ...details
             })
@@ -188,11 +203,16 @@ export const eventService = {
 
         return {
             id: data.id,
-            eventId: data.event_id,
+            event_id: data.event_id,
+            student_id: user.id,
+            roll_no: data.roll_no,
+            name: data.name,
+            email: data.email,
+            department: data.department,
+            year: data.year,
+            status: data.status,
+            registered_at: data.registered_at,
             event: { ...data.events, name: data.events.title } as any,
-            studentId: user.id,
-            registrationDate: data.registered_at || new Date().toISOString(),
-            status: 'confirmed',
         };
     },
 };
@@ -219,10 +239,15 @@ export const registrationService = {
 
             return data.map((r: any) => ({
                 id: r.id,
-                eventId: r.event_id,
-                studentId: user.id, // Consistent with frontend user state
-                registrationDate: r.registered_at,
-                status: r.status === 'REGISTERED' ? 'confirmed' : 'pending',
+                event_id: r.event_id,
+                student_id: user.id,
+                roll_no: r.roll_no,
+                name: r.name,
+                email: r.email,
+                department: r.department,
+                year: r.year,
+                status: r.status,
+                registered_at: r.registered_at,
                 event: {
                     id: r.events.id,
                     name: r.events.title,
@@ -376,6 +401,76 @@ export const profileService = {
 
         return data.publicUrl;
     },
+};
+
+export const attendanceService = {
+    markAttendance: async (rawEventId: string, scanMethod: 'QR' | 'MANUAL' = 'QR'): Promise<Attendance> => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !user.email) throw new Error('User not authenticated');
+
+        // Extract UUID from potential URL (e.g., http://localhost:3000/attendance/UUID?...)
+        let eventId = rawEventId;
+        const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+        const match = rawEventId.match(uuidRegex);
+        if (match) {
+            eventId = match[0];
+        } else {
+            console.warn('No UUID found in scanned data:', rawEventId);
+            // We'll proceed with eventId as is, which might still trigger the DB error if invalid
+        }
+
+        // Fetch student profile details needed for attendance table
+        const { data: profile, error: profileError } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError || !profile) {
+            console.error('Error fetching student profile for attendance:', profileError);
+            throw new Error('Could not fetch student profile. Please update your profile first.');
+        }
+
+        const attendanceData = {
+            event_id: eventId,
+            student_id: user.id,
+            prn: profile.roll_number, // User context suggests roll_number is used as the primary identifier
+            roll_number: profile.roll_number,
+            name: profile.full_name,
+            email: user.email,
+            department: profile.department,
+            year: profile.year?.toString(),
+            division: profile.division,
+            status: 'PRESENT',
+            scan_method: scanMethod,
+            timestamp: new Date().toISOString(),
+        };
+
+        const { data, error } = await supabase
+            .from('attendance')
+            .insert(attendanceData)
+            .select()
+            .single();
+
+        if (error) {
+            if (error.code === '23505') { // Unique constraint violation
+                throw new Error('Attendance already marked for this event.');
+            }
+            console.error('Attendance marking error:', error);
+            throw error;
+        }
+
+        return data as Attendance;
+    },
+    getEventAttendance: async (eventId: string): Promise<Attendance[]> => {
+        const { data, error } = await supabase
+            .from('attendance')
+            .select('*')
+            .eq('event_id', eventId);
+
+        if (error) throw error;
+        return data as Attendance[];
+    }
 };
 
 export default api;

@@ -2,11 +2,20 @@ export interface User {
     id: string;
     full_name: string;
     roll_number: string;
-    email?: string; // Added email field
-    mobile_number?: string;
-    department?: string;
+    email: string;
+    department: string;
     year: number;
+    mobile_number?: string;
     profile_image?: string;
+    division?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface AppUser {
+    id: string;
+    club_id?: string;
+    email: string;
     created_at?: string;
     updated_at?: string;
 }
@@ -50,13 +59,36 @@ export interface Announcement {
 
 export interface Registration {
     id: string;
-    eventId: string;
-    event: Event;
-    studentId: string;
-    registrationDate: string;
-    status: 'confirmed' | 'pending' | 'cancelled';
-    groupCode?: string;
-    groupMembers?: string[];
+    event_id: string;
+    student_id?: string;
+    roll_no: string;
+    name: string;
+    email: string;
+    department?: string;
+    year?: string;
+    status: 'REGISTERED' | 'ATTENDED' | 'CANCELLED';
+    division?: string;
+    registered_at?: string;
+    // For mapping to UI
+    event?: Event;
+}
+
+export interface Attendance {
+    id: string;
+    event_id: string;
+    student_id?: string;
+    prn: string;
+    roll_number?: string;
+    name: string;
+    email: string;
+    department?: string;
+    division?: string;
+    year?: string;
+    status: 'PRESENT' | 'ABSENT';
+    timestamp?: string;
+    scan_method: 'QR' | 'MANUAL';
+    certificate_issued: boolean;
+    certificate_url?: string;
 }
 
 export interface Notification {
@@ -67,3 +99,4 @@ export interface Notification {
     date: string;
     isRead: boolean;
 }
+

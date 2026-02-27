@@ -4,17 +4,17 @@ import { useRouter } from "expo-router";
 import { Camera, ChevronRight, Info, LogOut, X } from "lucide-react-native";
 import React, { useState } from "react";
 import {
-    Alert,
-    Dimensions,
-    Image,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useColorScheme,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useColorScheme,
+  View,
 } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
@@ -82,13 +82,13 @@ export default function ProfileScreen() {
 
   // Stats calculation
   const registeredCount =
-    myRegistrations?.filter((r) => r.status !== "cancelled").length || 0;
+    myRegistrations?.filter((r) => r.status !== "CANCELLED").length || 0;
   const completedCount =
     myRegistrations?.filter(
-      (r) => new Date(r.event.date) <= new Date() && r.status !== "cancelled",
+      (r) => r.event && new Date(r.event.date) <= new Date() && r.status !== "CANCELLED",
     ).length || 0;
   const cancelledCount =
-    myRegistrations?.filter((r) => r.status === "cancelled").length || 0;
+    myRegistrations?.filter((r) => r.status === "CANCELLED").length || 0;
 
   const branchOptions = [
     { label: "Information Technology", value: "Information Technology" },

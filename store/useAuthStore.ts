@@ -44,13 +44,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         try {
             const token = await AsyncStorage.getItem('auth_token');
             const userData = await AsyncStorage.getItem('user_data');
+
             if (token && userData) {
-                set({
-                    token,
-                    user: JSON.parse(userData),
-                    isAuthenticated: true,
-                    isLoading: false
-                });
+                // Check if Supabase session is still valid
+                const { supabase } = await import('../services/supabase');
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (session) {
+                    set({
+                        token,
+                        user: JSON.parse(userData),
+                        isAuthenticated: true,
+                        isLoading: false
+                    });
+                } else {
+                    // Session expired or invalid in Supabase
+                    await AsyncStorage.removeItem('auth_token');
+                    await AsyncStorage.removeItem('user_data');
+                    set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+                }
             } else {
                 set({ isLoading: false });
             }

@@ -1,7 +1,7 @@
 import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
 } from "@react-navigation/native";
 import * as Linking from "expo-linking";
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -30,47 +30,40 @@ export default function RootLayout() {
   // Handle deep links
   useEffect(() => {
     const handleDeepLink = async (url: string) => {
+      // Only process official scheme or links containing 'event'
+      if (!url || (!url.includes("collegeevents://") && !url.includes("event/"))) {
+        return;
+      }
+
       console.log("Processing deep link:", url);
 
       try {
-        // Parse the URL to extract event ID
-        // URL formats can be:
-        // collegeevents://event/123
-        // app://event/123
-
-        // Extract the path part after the scheme
-        // For "collegeevents://event/123", we get "event/123"
-        const pathMatch = url.match(/^[a-z]+:\/\/(.+)$/i);
-        const path = pathMatch ? pathMatch[1] : url;
+        // Extract the path part
+        let path = url;
+        if (url.includes("://")) {
+          const pathMatch = url.match(/^[a-z]+:\/\/(.+)$/i);
+          path = pathMatch ? pathMatch[1] : url;
+        }
 
         // Extract event ID from path (e.g., "event/123" -> "123")
         const parts = path
           .split("/")
-          .filter((p) => p && p !== "event" && p !== "events"); // Remove empty strings and route name
+          .filter((p) => p && p !== "event" && p !== "events" && !p.includes(":")); // Filter out server/port parts
 
         if (parts.length > 0) {
-          let eventId = parts[0];
+          let eventId = parts[parts.length - 1]; // Take the last part which is likely the ID
 
-          // Clean up the event ID - remove any query params or fragments
+          // Clean up the event ID
           eventId = eventId.split("?")[0].split("#")[0].trim();
 
-          // Validate event ID is not a server address
-          if (
-            !eventId.includes(":") &&
-            !eventId.includes("10.") &&
-            !eventId.includes("192.")
-          ) {
-            console.log("Extracted valid event ID:", eventId);
+          // Validate UUID format or numeric ID, and ensure it's not a server address
+          const isServerAddress = eventId.includes(":") || eventId.includes("10.") || eventId.includes("192.");
 
-            // Navigate to event details
+          if (!isServerAddress && eventId.length >= 1) {
+            console.log("Extracted valid event ID:", eventId);
             setTimeout(() => {
               router.push(`/event/${eventId}`);
-            }, 500); // Delay to ensure auth is checked
-          } else {
-            console.warn(
-              "Invalid event ID format (contains server address):",
-              eventId,
-            );
+            }, 500);
           }
         }
       } catch (error) {
@@ -80,15 +73,17 @@ export default function RootLayout() {
 
     // Handle app opened with deep link
     const subscription = Linking.addEventListener("url", ({ url }) => {
-      console.log("Deep link event received:", url);
-      handleDeepLink(url);
+      if (url) handleDeepLink(url);
     });
 
-    // Check if there's an initial URL (app opened with deep link)
+    // Check initial URL
     Linking.getInitialURL().then((url) => {
-      if (url != null) {
-        console.log("Initial deep link:", url);
-        handleDeepLink(url);
+      if (url) {
+        // Only process if it looks like an actual event link, not the dev server
+        if (url.includes("collegeevents://") || (url.includes("event/") && !url.includes(":8081"))) {
+          console.log("Initial deep link:", url);
+          handleDeepLink(url);
+        }
       }
     });
 

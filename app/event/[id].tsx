@@ -1,28 +1,28 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
-    ArrowLeft,
-    Award,
-    Calendar,
-    Clock,
-    Info,
-    MapPin,
-    Share2,
-    Users,
+  ArrowLeft,
+  Award,
+  Calendar,
+  Clock,
+  Info,
+  MapPin,
+  Share2,
+  Users,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    Image,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useColorScheme,
-    View,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
 } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -161,7 +161,7 @@ export default function EventDetailsScreen() {
   const isEventCompleted =
     new Date(event.date) < new Date() && new Date(event.deadline) < new Date();
   // Check using loose comparison for ID in case of string/number mismatch, though both should be strings
-  const isRegistered = myRegistrations.some((r) => r.eventId == event.id);
+  const isRegistered = myRegistrations.some((r) => r.event_id == event.id);
   const canRegister =
     event.status === "Open" && !isDeadlinePassed && !isRegistered;
 
@@ -340,14 +340,14 @@ export default function EventDetailsScreen() {
           <Button
             title="Already Registered"
             disabled={true}
-            onPress={() => {}}
+            onPress={() => { }}
             style={{ ...styles.registerButton, opacity: 0.7 }}
           />
         ) : isDeadlinePassed ? (
           <Button
             title="Registration Closed"
             disabled={true}
-            onPress={() => {}}
+            onPress={() => { }}
             style={{ ...styles.registerButton, opacity: 0.7 }}
           />
         ) : (

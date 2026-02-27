@@ -21,6 +21,7 @@ import {
 } from "react-native";
 import { Card } from "../../components/ui/Card";
 import { Colors } from "../../constants/theme";
+import { attendanceService } from "../../services/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useDataStore } from "../../store/useDataStore";
 
@@ -158,13 +159,26 @@ export default function HomeScreen() {
     setShowScanner(true);
   };
 
-  const onBarCodeScanned = ({ data }: { data: string }) => {
+  const onBarCodeScanned = async ({ data }: { data: string }) => {
     setShowScanner(false);
-    setIsAttendanceMarked(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert('Attendance Marked', 'Your attendance has been successfully recorded!', [
-      { text: 'OK' }
-    ]);
+
+    try {
+      // The QR code usually contains the event ID
+      // We'll mark attendance using the new attendanceService
+      await attendanceService.markAttendance(data, 'QR');
+
+      setIsAttendanceMarked(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Attendance Marked', 'Your attendance has been successfully recorded!', [
+        { text: 'OK' }
+      ]);
+    } catch (error: any) {
+      console.error('Attendance marking failed:', error);
+      Alert.alert(
+        'Attendance Error',
+        error.message || 'Failed to record attendance. Please ensure you are scanning the correct event QR code.'
+      );
+    }
   };
 
   const popularEvents = [...events]
@@ -327,7 +341,7 @@ export default function HomeScreen() {
             <Text style={styles.statValue}>
               {
                 myRegistrations.filter(
-                  (r) => new Date(r.event.date) >= new Date(),
+                  (r) => r.event && new Date(r.event.date) >= new Date(),
                 ).length
               }
             </Text>
@@ -338,7 +352,7 @@ export default function HomeScreen() {
             <Text style={styles.statValue}>
               {
                 myRegistrations.filter(
-                  (r) => new Date(r.event.date) < new Date(),
+                  (r) => r.event && new Date(r.event.date) < new Date(),
                 ).length
               }
             </Text>

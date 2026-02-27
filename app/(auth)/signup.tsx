@@ -31,6 +31,7 @@ export default function SignupScreen() {
     const [branch, setBranch] = useState('');
     const [year, setYear] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [division, setDivision] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -59,8 +60,14 @@ export default function SignupScreen() {
         { label: 'Fourth Year (BE)', value: 'BE' },
     ];
 
+    const divisionOptions = [
+        { label: 'Division A', value: 'A' },
+        { label: 'Division B', value: 'B' },
+        { label: 'Division C', value: 'C' },
+    ];
+
     const handleSignup = async () => {
-        if (!name || !email || !rollNumber || !password || !branch || !year || !phoneNumber) {
+        if (!name || !email || !rollNumber || !password || !branch || !year || !phoneNumber || !division) {
             setError('All fields are mandatory');
             return;
         }
@@ -83,7 +90,8 @@ export default function SignupScreen() {
                 name,
                 branch,
                 year,
-                phoneNumber
+                phoneNumber,
+                division
             );
 
             Alert.alert(
@@ -179,6 +187,14 @@ export default function SignupScreen() {
                             onSelect={setYear}
                             options={yearOptions}
                             icon={<Calendar size={20} color={colors.textMuted} />}
+                        />
+
+                        <Select
+                            label="Division"
+                            value={division}
+                            onSelect={setDivision}
+                            options={divisionOptions}
+                            icon={<Hash size={20} color={colors.textMuted} />}
                         />
 
                         <Input
