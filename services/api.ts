@@ -100,6 +100,8 @@ export const eventService = {
             throw error;
         }
 
+        if (!data) return [];
+
         return data.map((e: any) => ({
             id: e.id,
             name: e.title,
@@ -148,7 +150,7 @@ export const eventService = {
             representativePhone: e.contact_person || '',
         };
     },
-    registerForEvent: async (eventId: string, details: any): Promise<Registration> => {
+    registerForEvent: async (eventId: string, details: Record<string, any>): Promise<Registration> => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || !user.email) throw new Error('User not authenticated');
 
@@ -237,6 +239,7 @@ export const registrationService = {
                 return [];
             }
 
+            if (!data) return [];
             return data.map((r: any) => ({
                 id: r.id,
                 event_id: r.event_id,

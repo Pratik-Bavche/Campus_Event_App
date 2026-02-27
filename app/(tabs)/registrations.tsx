@@ -17,6 +17,7 @@ import {
 import { Card } from "../../components/ui/Card";
 import { Colors } from "../../constants/theme";
 import { useDataStore } from "../../store/useDataStore";
+import { Registration } from "../../types";
 
 export default function RegistrationsScreen() {
   const {
@@ -43,11 +44,11 @@ export default function RegistrationsScreen() {
 
   const tabs = ["All", "Completed", "Cancelled"];
 
-  const filteredRegistrations = myRegistrations.filter((reg: any) => {
+  const filteredRegistrations = myRegistrations.filter((reg: Registration) => {
     if (selectedTab === "All") return reg.status !== "CANCELLED";
     if (selectedTab === "Completed")
       return (
-        new Date(reg.event.date) <= new Date() && reg.status !== "CANCELLED"
+        reg.event && new Date(reg.event.date) <= new Date() && reg.status !== "CANCELLED"
       );
     if (selectedTab === "Cancelled") return reg.status === "CANCELLED";
     return true;
@@ -86,15 +87,17 @@ export default function RegistrationsScreen() {
     );
   };
 
-  const renderRegistrationItem = ({ item }: { item: any }) => {
+  const renderRegistrationItem = ({ item }: { item: Registration }) => {
     const isCancelled = item.status === "CANCELLED";
-    const isCompleted = new Date(item.event.date) <= new Date();
+    const isCompleted = item.event ? new Date(item.event.date) <= new Date() : false;
+
+    if (!item.event) return null;
 
     return (
       <Card style={[styles.regCard, isCancelled && { opacity: 0.7 }]}>
         <View style={styles.eventRow}>
           <Image
-            source={{ uri: item.event.poster }}
+            source={{ uri: item.event?.poster || 'https://via.placeholder.com/400x200' }}
             style={styles.eventImage}
           />
           <View style={styles.eventInfo}>
@@ -103,7 +106,7 @@ export default function RegistrationsScreen() {
                 style={[styles.eventName, { color: colors.text }]}
                 numberOfLines={2}
               >
-                {item.event.name}
+                {item.event?.name}
               </Text>
               <View
                 style={[
@@ -146,7 +149,7 @@ export default function RegistrationsScreen() {
                     { backgroundColor: colors.primary + "10" },
                     { transform: [{ scale: pressed ? 0.98 : 1 }] },
                   ]}
-                  onPress={() => router.push(`/event/${item.event.id}`)}
+                  onPress={() => router.push(`/event/${item.event?.id}`)}
                 >
                   <Text
                     style={[styles.actionButtonText, { color: colors.primary }]}
@@ -160,7 +163,7 @@ export default function RegistrationsScreen() {
                     { backgroundColor: colors.error + "10" },
                     { transform: [{ scale: pressed ? 0.98 : 1 }] },
                   ]}
-                  onPress={() => handleCancel(item.id, item.event.name)}
+                  onPress={() => handleCancel(item.id, item.event?.name || 'Event')}
                 >
                   <Text
                     style={[styles.actionButtonText, { color: colors.error }]}
@@ -179,7 +182,7 @@ export default function RegistrationsScreen() {
                     { backgroundColor: colors.primary + "10" },
                     { transform: [{ scale: pressed ? 0.98 : 1 }] },
                   ]}
-                  onPress={() => router.push(`/event/${item.event.id}`)}
+                  onPress={() => router.push(`/event/${item.event?.id}`)}
                 >
                   <Text
                     style={[styles.actionButtonText, { color: colors.primary }]}
@@ -194,7 +197,7 @@ export default function RegistrationsScreen() {
                       { backgroundColor: "#10b98115" },
                       { transform: [{ scale: pressed ? 0.98 : 1 }] },
                     ]}
-                    onPress={() => handleDownloadCertificate(item.event.name)}
+                    onPress={() => handleDownloadCertificate(item.event?.name || 'Event')}
                   >
                     <View
                       style={{

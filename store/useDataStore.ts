@@ -36,9 +36,14 @@ export const useDataStore = create<DataState>((set, get) => ({
         try {
             const events = await eventService.getEvents();
             set({ events, isEventsLoading: false });
-        } catch (error) {
+        } catch (error: any) {
             set({ isEventsLoading: false });
-            console.warn('Fetch events error', error);
+            const message = error?.message || '';
+            if (message.includes('525')) {
+                console.warn('Network Error (525): SSL handshake failed. This is likely a service issue with Supabase or your connection.');
+            } else {
+                console.warn('Fetch events error', error);
+            }
         }
     },
 

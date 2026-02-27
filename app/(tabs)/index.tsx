@@ -528,7 +528,7 @@ export default function HomeScreen() {
               ]}
             >
               <Image
-                source={{ uri: item.poster }}
+                source={{ uri: item.poster || 'https://via.placeholder.com/400x200' }}
                 style={styles.featuredImage}
               />
               <View style={styles.badgeContainer}>

@@ -2,16 +2,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Calendar, Clock, Hash, Search, Users } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useColorScheme,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
 } from "react-native";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
@@ -72,7 +72,7 @@ export default function EventsScreen() {
       onPress={() => router.push(`/event/${item.id}`)}
     >
       <View style={styles.eventRow}>
-        <Image source={{ uri: item.poster }} style={styles.eventImage} />
+        <Image source={{ uri: item.poster || 'https://via.placeholder.com/400x200' }} style={styles.eventImage} />
         <View style={styles.eventInfo}>
           <View style={styles.titleRow}>
             <Text

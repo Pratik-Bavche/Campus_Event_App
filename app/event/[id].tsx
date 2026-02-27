@@ -170,7 +170,7 @@ export default function EventDetailsScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.imageContainer}>
-        <Image source={{ uri: event.poster }} style={styles.poster} />
+        <Image source={{ uri: event.poster || 'https://via.placeholder.com/400x200' }} style={styles.poster} />
         <LinearGradient
           colors={["rgba(0,0,0,0.6)", "transparent", "rgba(0,0,0,0.8)"]}
           style={styles.overlay}
