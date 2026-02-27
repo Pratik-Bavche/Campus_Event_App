@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { Card } from "../../components/ui/Card";
@@ -19,6 +20,8 @@ import { Colors } from "../../constants/theme";
 import { useDataStore } from "../../store/useDataStore";
 
 export default function EventsScreen() {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
   const { q } = useLocalSearchParams();
   const { events, fetchEvents, isEventsLoading } = useDataStore();
   const [searchQuery, setSearchQuery] = useState((q as string) || "");
@@ -48,7 +51,6 @@ export default function EventsScreen() {
     );
 
     if (selectedCategory !== "All Events") {
-      // For now using club as category mapping or just static labels
       filtered = filtered.filter(
         (e) =>
           e.club.includes(selectedCategory) ||
@@ -68,15 +70,18 @@ export default function EventsScreen() {
 
   const renderEventItem = ({ item }: { item: any }) => (
     <Card
-      style={styles.eventCard}
+      style={[styles.eventCard, { width: isTablet ? '48%' : '100%' }]}
       onPress={() => router.push(`/event/${item.id}`)}
     >
-      <View style={styles.eventRow}>
-        <Image source={{ uri: item.poster || 'https://via.placeholder.com/400x200' }} style={styles.eventImage} />
+      <View style={[styles.eventRow, { gap: isTablet ? 20 : 16 }]}>
+        <Image
+          source={{ uri: item.poster || 'https://via.placeholder.com/400x200' }}
+          style={[styles.eventImage, { width: isTablet ? 120 : 100, height: isTablet ? 120 : 100 }]}
+        />
         <View style={styles.eventInfo}>
           <View style={styles.titleRow}>
             <Text
-              style={[styles.eventName, { color: colors.text }]}
+              style={[styles.eventName, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}
               numberOfLines={2}
             >
               {item.name}
@@ -110,7 +115,7 @@ export default function EventsScreen() {
             <View style={[styles.clubIcon, { backgroundColor: colors.border }]}>
               <Hash size={12} color={colors.textMuted} />
             </View>
-            <Text style={[styles.clubName, { color: colors.textMuted }]}>
+            <Text style={[styles.clubName, { color: colors.textMuted, fontSize: isTablet ? 14 : 13 }]}>
               {item.club}
             </Text>
           </View>
@@ -154,8 +159,8 @@ export default function EventsScreen() {
         style={{
           backgroundColor: colors.primary,
           paddingTop: Platform.OS === "ios" ? 60 : 60,
-          paddingBottom: 24,
-          paddingHorizontal: 24,
+          paddingBottom: isTablet ? 32 : 24,
+          paddingHorizontal: isTablet ? 40 : 24,
           borderBottomLeftRadius: 30,
           borderBottomRightRadius: 30,
           elevation: 4,
@@ -165,13 +170,13 @@ export default function EventsScreen() {
           shadowRadius: 8,
         }}
       >
-        <Text style={{ fontSize: 28, fontWeight: "bold", color: "#fff" }}>
+        <Text style={{ fontSize: isTablet ? 34 : 28, fontWeight: "bold", color: "#fff" }}>
           All Events
         </Text>
       </View>
 
       {/* Search and Filters */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingHorizontal: isTablet ? 40 : 24 }]}>
         <Input
           placeholder="Search events or clubs..."
           value={searchQuery}
@@ -194,6 +199,8 @@ export default function EventsScreen() {
                 {
                   backgroundColor:
                     selectedCategory === cat ? colors.primary : colors.border,
+                  paddingHorizontal: isTablet ? 24 : 20,
+                  paddingVertical: isTablet ? 12 : 10,
                 },
                 { transform: [{ scale: pressed ? 0.95 : 1 }] },
               ]}
@@ -203,6 +210,7 @@ export default function EventsScreen() {
                   styles.filterChipText,
                   {
                     color: selectedCategory === cat ? "#fff" : colors.textMuted,
+                    fontSize: isTablet ? 15 : 14
                   },
                 ]}
               >
@@ -226,6 +234,7 @@ export default function EventsScreen() {
                     selectedStatus === stat
                       ? colors.primary + "10"
                       : "transparent",
+                  paddingHorizontal: isTablet ? 32 : 24,
                 },
                 { transform: [{ scale: pressed ? 0.95 : 1 }] },
               ]}
@@ -257,7 +266,12 @@ export default function EventsScreen() {
           data={filteredEvents}
           renderItem={renderEventItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          numColumns={isTablet ? 2 : 1}
+          columnWrapperStyle={isTablet ? { gap: 16, paddingHorizontal: 40 } : null}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingHorizontal: isTablet ? 0 : 24, paddingTop: 8 }
+          ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
@@ -275,7 +289,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 24,
     marginBottom: 8,
     marginTop: 12,
   },
@@ -292,12 +305,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   filterChip: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
     borderRadius: 20,
   },
   filterChipText: {
-    fontSize: 14,
     fontWeight: "600",
   },
   statusFilters: {
@@ -309,7 +319,6 @@ const styles = StyleSheet.create({
     borderTopColor: "#f3f4f6",
   },
   statusTab: {
-    paddingHorizontal: 24,
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
@@ -319,8 +328,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   listContent: {
-    padding: 24,
-    paddingTop: 8,
     paddingBottom: 100,
   },
   eventCard: {
@@ -330,11 +337,8 @@ const styles = StyleSheet.create({
   },
   eventRow: {
     flexDirection: "row",
-    gap: 28,
   },
   eventImage: {
-    width: 100,
-    height: 100,
     borderRadius: 16,
   },
   eventInfo: {
@@ -347,7 +351,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   eventName: {
-    fontSize: 16,
     fontWeight: "bold",
     flex: 1,
     marginRight: 8,
@@ -375,11 +378,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   clubName: {
-    fontSize: 13,
-  },
-  repPhone: {
-    fontSize: 12,
-    fontWeight: "600",
   },
   detailsRow: {
     flexDirection: "row",

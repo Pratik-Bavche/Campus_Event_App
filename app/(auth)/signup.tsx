@@ -4,7 +4,6 @@ import { BookOpen, Calendar, GraduationCap, Hash, Lock, Mail, Phone, User } from
 import React, { useState } from 'react';
 import {
     Alert,
-    Dimensions,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -12,6 +11,7 @@ import {
     Text,
     TouchableOpacity,
     useColorScheme,
+    useWindowDimensions,
     View
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
@@ -21,9 +21,9 @@ import { Colors } from '../../constants/theme';
 import { authService } from '../../services/api';
 import { useAuthStore } from '../../store/useAuthStore';
 
-const { width } = Dimensions.get('window');
-
 export default function SignupScreen() {
+    const { width, height } = useWindowDimensions();
+    const isTablet = width >= 768;
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [rollNumber, setRollNumber] = useState('');
@@ -72,13 +72,6 @@ export default function SignupScreen() {
             return;
         }
 
-        /* 
-        if (!email.endsWith('.edu')) {
-            setError('Please use your college email address');
-            // return; // Commented for testing flexibility
-        }
-        */
-
         setIsLoading(true);
         setError('');
 
@@ -115,14 +108,14 @@ export default function SignupScreen() {
         <View style={{ flex: 1, backgroundColor: colors.background }}>
             <LinearGradient
                 colors={colors.headerGradient as any}
-                style={styles.headerGradient}
+                style={[styles.headerGradient, { height: isTablet ? 320 : 260 }]}
             >
-                <View style={styles.headerContent}>
-                    <View style={styles.logoContainer}>
-                        <GraduationCap color={colors.primary} size={40} />
+                <View style={[styles.headerContent, { paddingTop: isTablet ? 40 : 0 }]}>
+                    <View style={[styles.logoContainer, isTablet && { width: 90, height: 90, borderRadius: 28 }]}>
+                        <GraduationCap color={colors.primary} size={isTablet ? 54 : 40} />
                     </View>
-                    <Text style={styles.headerTitle}>Create Account</Text>
-                    <Text style={styles.headerSubtitle}>Join the campus community</Text>
+                    <Text style={[styles.headerTitle, { fontSize: isTablet ? 38 : 26 }]}>Create Account</Text>
+                    <Text style={[styles.headerSubtitle, { fontSize: isTablet ? 17 : 14 }]}>Join the campus community</Text>
                 </View>
             </LinearGradient>
 
@@ -131,10 +124,17 @@ export default function SignupScreen() {
                 style={styles.container}
             >
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        isTablet && { alignItems: 'center' }
+                    ]}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.text }]}>
+                    <View style={[
+                        styles.card,
+                        { backgroundColor: colors.card, shadowColor: colors.text },
+                        isTablet && { width: 600, padding: 40 }
+                    ]}>
                         <Input
                             label="Full Name"
                             value={name}
@@ -144,7 +144,6 @@ export default function SignupScreen() {
 
                         <Input
                             label="College Email"
-                            placeholder="student@college.edu"
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
@@ -153,7 +152,7 @@ export default function SignupScreen() {
                         />
 
                         <View style={styles.row}>
-                            <View style={{ flex: 1, marginRight: 8 }}>
+                            <View style={{ flex: 1, marginRight: isTablet ? 12 : 8 }}>
                                 <Input
                                     label="Roll Number"
                                     value={rollNumber}
@@ -162,7 +161,7 @@ export default function SignupScreen() {
                                     icon={<Hash size={20} color={colors.textMuted} />}
                                 />
                             </View>
-                            <View style={{ flex: 1, marginLeft: 8 }}>
+                            <View style={{ flex: 1, marginLeft: isTablet ? 12 : 8 }}>
                                 <Input
                                     label="Mobile No"
                                     value={phoneNumber}
@@ -181,21 +180,26 @@ export default function SignupScreen() {
                             icon={<BookOpen size={20} color={colors.textMuted} />}
                         />
 
-                        <Select
-                            label="Year"
-                            value={year}
-                            onSelect={setYear}
-                            options={yearOptions}
-                            icon={<Calendar size={20} color={colors.textMuted} />}
-                        />
-
-                        <Select
-                            label="Division"
-                            value={division}
-                            onSelect={setDivision}
-                            options={divisionOptions}
-                            icon={<Hash size={20} color={colors.textMuted} />}
-                        />
+                        <View style={isTablet ? styles.row : {}}>
+                            <View style={isTablet ? { flex: 1, marginRight: 12 } : {}}>
+                                <Select
+                                    label="Year"
+                                    value={year}
+                                    onSelect={setYear}
+                                    options={yearOptions}
+                                    icon={<Calendar size={20} color={colors.textMuted} />}
+                                />
+                            </View>
+                            <View style={isTablet ? { flex: 1, marginLeft: 12 } : {}}>
+                                <Select
+                                    label="Division"
+                                    value={division}
+                                    onSelect={setDivision}
+                                    options={divisionOptions}
+                                    icon={<Hash size={20} color={colors.textMuted} />}
+                                />
+                            </View>
+                        </View>
 
                         <Input
                             label="Password"
@@ -211,14 +215,14 @@ export default function SignupScreen() {
                             title="Sign Up"
                             onPress={handleSignup}
                             loading={isLoading}
-                            style={styles.signupButton}
+                            style={{ ...styles.signupButton, height: isTablet ? 64 : 56 }}
                         />
 
                         <View style={styles.footer}>
-                            <Text style={{ color: colors.textMuted }}>Already have an account? </Text>
+                            <Text style={{ color: colors.textMuted, fontSize: isTablet ? 15 : 14 }}>Already have an account? </Text>
                             <Link href="/login" asChild>
                                 <TouchableOpacity>
-                                    <Text style={{ color: colors.primary, fontWeight: '700' }}>Login</Text>
+                                    <Text style={{ color: colors.primary, fontWeight: '700', fontSize: isTablet ? 15 : 14 }}>Login</Text>
                                 </TouchableOpacity>
                             </Link>
                         </View>
@@ -235,7 +239,6 @@ const styles = StyleSheet.create({
         marginTop: -20,
     },
     headerGradient: {
-        height: 260,
         paddingTop: 60,
         alignItems: 'center',
     },
@@ -257,13 +260,11 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
     },
     headerTitle: {
-        fontSize: 26,
         fontWeight: 'bold',
         color: '#fff',
         marginBottom: 4,
     },
     headerSubtitle: {
-        fontSize: 14,
         color: 'rgba(255,255,255,0.8)',
     },
     scrollContent: {
@@ -285,7 +286,6 @@ const styles = StyleSheet.create({
     },
     signupButton: {
         marginTop: 10,
-        height: 56,
         borderRadius: 16,
     },
     errorText: {

@@ -13,6 +13,7 @@ import {
   Text,
   TextInput,
   useColorScheme,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { Button } from "../../components/ui/Button";
@@ -70,26 +71,33 @@ const InfoField = ({
   isEditing = false,
   onChangeText,
   keyboardType = "default"
-}: InfoFieldProps) => (
-  <View style={[styles.infoGroup, halfWidth && { width: "48%" }]}>
-    <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{label}</Text>
-    {isEditing ? (
-      <TextInput
-        style={[styles.editableInput, { color: colors.text, borderBottomColor: colors.primary + "80" }]}
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboardType}
-        autoFocus={label === "Full Name"}
-      />
-    ) : (
-      <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1}>
-        {value}
-      </Text>
-    )}
-  </View>
-);
+}: InfoFieldProps) => {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
+
+  return (
+    <View style={[styles.infoGroup, halfWidth && { width: isTablet ? "49%" : "48%" }]}>
+      <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{label}</Text>
+      {isEditing ? (
+        <TextInput
+          style={[styles.editableInput, { color: colors.text, borderBottomColor: colors.primary + "80" }]}
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+          autoFocus={label === "Full Name"}
+        />
+      ) : (
+        <Text style={[styles.infoValue, { color: colors.text, fontSize: isTablet ? 18 : 16 }]} numberOfLines={1}>
+          {value}
+        </Text>
+      )}
+    </View>
+  );
+};
 
 export default function ProfileScreen() {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
   const { user, logout, updateUser } = useAuthStore();
   const { myRegistrations } = useDataStore();
   const router = useRouter();
@@ -262,9 +270,9 @@ export default function ProfileScreen() {
         </LinearGradient>
 
         {/* Content area */}
-        <View style={styles.content}>
+        <View style={[styles.content, { paddingHorizontal: isTablet ? 60 : 20 }]}>
           {/* Profile Card */}
-          <View style={[styles.profileCard, { backgroundColor: colors.card }]}>
+          <View style={[styles.profileCard, { backgroundColor: colors.card, padding: isTablet ? 32 : 24, paddingTop: 0 }]}>
             <View style={styles.avatarWrapper}>
               <Pressable onPress={handleImagePick} style={styles.avatarShadow}>
                 <Image
@@ -426,9 +434,9 @@ export default function ProfileScreen() {
           {/* Stats Section - Hidden during editing to focus on form */}
           {!isEditing && (
             <>
-              <View style={styles.statsRow}>
+              <View style={[styles.statsRow, { gap: isTablet ? 24 : 0 }]}>
                 <Pressable
-                  style={{ width: "31%" }}
+                  style={{ width: isTablet ? "31%" : "31%" }}
                   onPress={() => handleStatPress("All")}
                 >
                   {({ pressed }) => (
@@ -442,7 +450,7 @@ export default function ProfileScreen() {
                   )}
                 </Pressable>
                 <Pressable
-                  style={{ width: "31%" }}
+                  style={{ width: isTablet ? "31%" : "31%" }}
                   onPress={() => handleStatPress("Completed")}
                 >
                   {({ pressed }) => (
@@ -456,7 +464,7 @@ export default function ProfileScreen() {
                   )}
                 </Pressable>
                 <Pressable
-                  style={{ width: "31%" }}
+                  style={{ width: isTablet ? "31%" : "31%" }}
                   onPress={() => handleStatPress("Cancelled")}
                 >
                   {({ pressed }) => (
@@ -473,14 +481,14 @@ export default function ProfileScreen() {
 
               {/* Certificate Card */}
               <View
-                style={[styles.certificateCard, { backgroundColor: colors.card }]}
+                style={[styles.certificateCard, { backgroundColor: colors.card, padding: isTablet ? 32 : 22 }]}
               >
                 <View style={styles.certificateHeaderRow}>
-                  <Text style={[styles.certificateTitle, { color: colors.text }]}>
+                  <Text style={[styles.certificateTitle, { color: colors.text, fontSize: isTablet ? 20 : 17 }]}>
                     Certificates
                   </Text>
                   <Text
-                    style={[styles.certificateCount, { color: colors.primary }]}
+                    style={[styles.certificateCount, { color: colors.primary, fontSize: isTablet ? 24 : 20 }]}
                   >
                     0
                   </Text>

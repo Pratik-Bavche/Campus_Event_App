@@ -4,7 +4,6 @@ import { Link, useRouter } from 'expo-router';
 import { ChevronRight, GraduationCap, Lock, Mail } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-    Dimensions,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -12,6 +11,7 @@ import {
     Text,
     TouchableOpacity,
     useColorScheme,
+    useWindowDimensions,
     View
 } from 'react-native';
 import { Button } from '../../components/ui/Button';
@@ -20,9 +20,9 @@ import { Colors } from '../../constants/theme';
 import { authService } from '../../services/api';
 import { useAuthStore } from '../../store/useAuthStore';
 
-const { width, height } = Dimensions.get('window');
-
 export default function LoginScreen() {
+    const { width, height } = useWindowDimensions();
+    const isTablet = width >= 768;
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -44,15 +44,11 @@ export default function LoginScreen() {
         setError('');
 
         try {
-            // Using email for login. Roll number param kept as empty string to match current signature
             const { token, user } = await authService.login(email, '', password);
-
             await AsyncStorage.setItem('auth_token', token);
             await AsyncStorage.setItem('user_data', JSON.stringify(user));
-
             setToken(token);
             setUser(user);
-
             router.replace('/(tabs)');
         } catch (err: any) {
             setError(err.message || 'Invalid credentials');
@@ -65,14 +61,14 @@ export default function LoginScreen() {
         <View style={{ flex: 1, backgroundColor: colors.background }}>
             <LinearGradient
                 colors={colors.headerGradient as any}
-                style={styles.headerGradient}
+                style={[styles.headerGradient, { height: isTablet ? height * 0.45 : height * 0.4 }]}
             >
-                <View style={styles.headerContent}>
-                    <View style={styles.logoContainer}>
-                        <GraduationCap color={colors.primary} size={42} />
+                <View style={[styles.headerContent, { paddingHorizontal: isTablet ? 60 : 30 }]}>
+                    <View style={[styles.logoContainer, isTablet && { width: 100, height: 100, borderRadius: 28 }]}>
+                        <GraduationCap color={colors.primary} size={isTablet ? 60 : 42} />
                     </View>
-                    <Text style={styles.headerTitle}>Welcome Back</Text>
-                    <Text style={styles.headerSubtitle}>Login to access your campus dashboard</Text>
+                    <Text style={[styles.headerTitle, { fontSize: isTablet ? 42 : 30 }]}>Welcome Back</Text>
+                    <Text style={[styles.headerSubtitle, { fontSize: isTablet ? 18 : 14 }]}>Login to access your campus dashboard</Text>
                 </View>
             </LinearGradient>
 
@@ -81,19 +77,25 @@ export default function LoginScreen() {
                 style={styles.container}
             >
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        isTablet && { alignItems: 'center' }
+                    ]}
                     showsVerticalScrollIndicator={false}
                     bounces={false}
                 >
-                    <View style={[styles.card, { backgroundColor: colors.card }]}>
+                    <View style={[
+                        styles.card,
+                        { backgroundColor: colors.card },
+                        isTablet && { width: 500, padding: 48 }
+                    ]}>
                         <View style={styles.formHeader}>
-                            <Text style={[styles.formTitle, { color: colors.text }]}>Student Login</Text>
+                            <Text style={[styles.formTitle, { color: colors.text, fontSize: isTablet ? 28 : 22 }]}>Student Login</Text>
                             <View style={[styles.titleSeparator, { backgroundColor: colors.primary }]} />
                         </View>
 
                         <Input
                             label="College Email"
-                            placeholder="student@college.edu"
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
@@ -110,7 +112,7 @@ export default function LoginScreen() {
                         />
 
                         <TouchableOpacity style={styles.forgotPassword}>
-                            <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Forgot Password?</Text>
+                            <Text style={{ color: colors.primary, fontSize: isTablet ? 14 : 13, fontWeight: '600' }}>Forgot Password?</Text>
                         </TouchableOpacity>
 
                         {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
@@ -119,15 +121,15 @@ export default function LoginScreen() {
                             title="Sign In"
                             onPress={handleLogin}
                             loading={isLoading}
-                            style={styles.loginButton}
+                            style={{ ...styles.loginButton, height: isTablet ? 64 : 58 }}
                             icon={<ChevronRight size={20} color="#fff" />}
                         />
 
                         <View style={styles.footer}>
-                            <Text style={{ color: colors.textMuted }}>Don't have an account? </Text>
+                            <Text style={{ color: colors.textMuted, fontSize: isTablet ? 15 : 14 }}>Don't have an account? </Text>
                             <Link href="/signup" asChild>
                                 <TouchableOpacity>
-                                    <Text style={{ color: colors.primary, fontWeight: '700' }}>Create One</Text>
+                                    <Text style={{ color: colors.primary, fontWeight: '700', fontSize: isTablet ? 15 : 14 }}>Create One</Text>
                                 </TouchableOpacity>
                             </Link>
                         </View>
@@ -145,14 +147,12 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     headerGradient: {
-        height: height * 0.4,
         alignItems: 'center',
         justifyContent: 'center',
         paddingBottom: 40,
     },
     headerContent: {
         alignItems: 'center',
-        paddingHorizontal: 30,
     },
     logoContainer: {
         width: 75,
@@ -169,14 +169,12 @@ const styles = StyleSheet.create({
         shadowRadius: 12,
     },
     headerTitle: {
-        fontSize: 30,
         fontWeight: 'bold',
         color: '#fff',
         marginBottom: 6,
         textAlign: 'center',
     },
     headerSubtitle: {
-        fontSize: 14,
         color: 'rgba(255,255,255,0.85)',
         textAlign: 'center',
         lineHeight: 20,
@@ -202,7 +200,6 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     formTitle: {
-        fontSize: 22,
         fontWeight: 'bold',
         marginBottom: 6,
     },
@@ -217,7 +214,6 @@ const styles = StyleSheet.create({
         marginTop: -4,
     },
     loginButton: {
-        height: 58,
         borderRadius: 18,
         elevation: 4,
         shadowColor: '#000',

@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
+  useWindowDimensions,
   View,
 } from "react-native";
 
@@ -20,6 +21,8 @@ import { useDataStore } from "../../store/useDataStore";
 import { Registration } from "../../types";
 
 export default function RegistrationsScreen() {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
   const {
     myRegistrations,
     fetchRegistrations,
@@ -94,16 +97,16 @@ export default function RegistrationsScreen() {
     if (!item.event) return null;
 
     return (
-      <Card style={[styles.regCard, isCancelled && { opacity: 0.7 }]}>
-        <View style={styles.eventRow}>
+      <Card style={[styles.regCard, isCancelled && { opacity: 0.7 }, { width: isTablet ? '48%' : '100%' }]}>
+        <View style={[styles.eventRow, { gap: isTablet ? 20 : 16 }]}>
           <Image
             source={{ uri: item.event?.poster || 'https://via.placeholder.com/400x200' }}
-            style={styles.eventImage}
+            style={[styles.eventImage, { width: isTablet ? 120 : 100, height: isTablet ? 120 : 100 }]}
           />
           <View style={styles.eventInfo}>
             <View style={styles.titleRow}>
               <Text
-                style={[styles.eventName, { color: colors.text }]}
+                style={[styles.eventName, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}
                 numberOfLines={2}
               >
                 {item.event?.name}
@@ -230,8 +233,8 @@ export default function RegistrationsScreen() {
         style={{
           backgroundColor: colors.primary,
           paddingTop: Platform.OS === "ios" ? 60 : 60,
-          paddingBottom: 12,
-          paddingHorizontal: 24,
+          paddingBottom: isTablet ? 24 : 12,
+          paddingHorizontal: isTablet ? 40 : 24,
           borderBottomLeftRadius: 30,
           borderBottomRightRadius: 30,
           elevation: 4,
@@ -243,7 +246,7 @@ export default function RegistrationsScreen() {
       >
         <Text
           style={{
-            fontSize: 28,
+            fontSize: isTablet ? 34 : 28,
             fontWeight: "bold",
             color: "#fff",
           }}
@@ -254,7 +257,7 @@ export default function RegistrationsScreen() {
 
       {/* Tabs below the blue header */}
       <View
-        style={[styles.tabContainer, { paddingHorizontal: 24, marginTop: 12 }]}
+        style={[styles.tabContainer, { paddingHorizontal: isTablet ? 40 : 24, marginTop: 12 }]}
       >
         {tabs.map((tab) => (
           <Pressable
@@ -265,11 +268,12 @@ export default function RegistrationsScreen() {
               {
                 backgroundColor:
                   selectedTab === tab ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0.03)",
+                paddingVertical: isTablet ? 14 : 10,
               },
               { transform: [{ scale: pressed ? 0.95 : 1 }] },
             ]}
           >
-            <Text style={[styles.tabText, { color: colors.text }]}>{tab}</Text>
+            <Text style={[styles.tabText, { color: colors.text, fontSize: isTablet ? 15 : 13 }]}>{tab}</Text>
           </Pressable>
         ))}
       </View>
@@ -283,7 +287,12 @@ export default function RegistrationsScreen() {
           data={filteredRegistrations}
           renderItem={renderRegistrationItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          numColumns={isTablet ? 2 : 1}
+          columnWrapperStyle={isTablet ? { gap: 16, paddingHorizontal: 40 } : null}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingHorizontal: isTablet ? 0 : 20, paddingTop: 16 }
+          ]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
@@ -321,17 +330,13 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
     borderRadius: 10,
     alignItems: "center",
   },
   tabText: {
-    fontSize: 13,
     fontWeight: "700",
   },
   listContent: {
-    padding: 20,
-    paddingTop: 16,
     paddingBottom: 100,
   },
   regCard: {
@@ -341,11 +346,8 @@ const styles = StyleSheet.create({
   },
   eventRow: {
     flexDirection: "row",
-    gap: 16,
   },
   eventImage: {
-    width: 100,
-    height: 100,
     borderRadius: 16,
   },
   eventInfo: {
@@ -358,7 +360,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   eventName: {
-    fontSize: 16,
     fontWeight: "bold",
     flex: 1,
     marginRight: 8,

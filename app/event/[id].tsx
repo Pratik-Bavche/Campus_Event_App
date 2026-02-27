@@ -14,7 +14,6 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   Image,
   Platform,
   Pressable,
@@ -22,7 +21,8 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
-  View,
+  useWindowDimensions,
+  View
 } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
@@ -32,43 +32,23 @@ import { shareService } from "../../services/shareService";
 import { useDataStore } from "../../store/useDataStore";
 import { Event } from "../../types";
 
-const { width } = Dimensions.get("window");
-
 export default function EventDetailsScreen() {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 768;
   const params = useLocalSearchParams();
   const rawId = params.id as string;
 
-  // Validate and extract event ID - handle cases where ID might contain server info
   const getValidEventId = (id: string | undefined): string | null => {
     if (!id) return null;
-
-    console.log("Raw event ID param:", id);
-
-    // If ID contains ":", ".", or starts with IP-like pattern, extract just the ID
-    if (id.includes(":") || id.includes("10.") || id.includes("192.")) {
-      console.warn("Invalid event ID format detected:", id);
-      return null;
-    }
-
-    // Remove any query parameters if present
+    if (id.includes(":") || id.includes("10.") || id.includes("192.")) return null;
     const cleanId = id.split("?")[0].split("#")[0].trim();
-
-    // Validate UUID format (usually 36 chars with hyphens) or numeric ID
-    if (
-      cleanId &&
-      (cleanId.length === 36 ||
-        /^[0-9a-f-]+$/i.test(cleanId) ||
-        /^\d+$/.test(cleanId))
-    ) {
+    if (cleanId && (cleanId.length === 36 || /^[0-9a-f-]+$/i.test(cleanId) || /^\d+$/.test(cleanId))) {
       return cleanId;
     }
-
-    console.warn("Event ID does not match expected format:", cleanId);
     return null;
   };
 
   const validId = getValidEventId(rawId);
-
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,23 +58,18 @@ export default function EventDetailsScreen() {
   const theme = useColorScheme() ?? "light";
   const colors = Colors[theme];
 
-  // Fetch event details
   useEffect(() => {
     const fetchEvent = async () => {
       if (!validId) {
         setError("Invalid event ID");
         setIsLoading(false);
-        console.error("No valid event ID provided:", rawId);
         return;
       }
-
       try {
-        console.log("Fetching event with ID:", validId);
         const data = await eventService.getEventById(validId);
         setEvent(data);
         setError(null);
       } catch (fetchError) {
-        console.error("Fetch event detail error", fetchError);
         setError("Failed to load event details");
       } finally {
         setIsLoading(false);
@@ -103,7 +78,6 @@ export default function EventDetailsScreen() {
     fetchEvent();
   }, [validId]);
 
-  // Fetch updated registrations
   useEffect(() => {
     fetchRegistrations();
   }, []);
@@ -122,7 +96,6 @@ export default function EventDetailsScreen() {
       await shareService.shareEvent(event.id, event.name, event.description);
     } catch (error) {
       Alert.alert("Error", "Failed to share event. Please try again.");
-      console.error("Share error:", error);
     }
   };
 
@@ -137,39 +110,24 @@ export default function EventDetailsScreen() {
   if (error || !event) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text
-          style={{
-            color: colors.text,
-            fontSize: 16,
-            marginBottom: 16,
-            textAlign: "center",
-          }}
-        >
+        <Text style={{ color: colors.text, fontSize: 16, marginBottom: 16, textAlign: "center" }}>
           {error || "Event not found"}
         </Text>
-        <Button
-          title="Go Back"
-          onPress={() => router.back()}
-          style={{ marginTop: 20 }}
-        />
+        <Button title="Go Back" onPress={() => router.back()} style={{ marginTop: 20 }} />
       </View>
     );
   }
 
   const isDeadlinePassed = new Date(event.deadline) < new Date();
-  // Certificate available only after event has started/happened AND deadline passed
-  const isEventCompleted =
-    new Date(event.date) < new Date() && new Date(event.deadline) < new Date();
-  // Check using loose comparison for ID in case of string/number mismatch, though both should be strings
+  const isEventCompleted = new Date(event.date) < new Date() && new Date(event.deadline) < new Date();
   const isRegistered = myRegistrations.some((r) => r.event_id == event.id);
-  const canRegister =
-    event.status === "Open" && !isDeadlinePassed && !isRegistered;
+  const canRegister = event.status === "Open" && !isDeadlinePassed && !isRegistered;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.imageContainer}>
+      <View style={[styles.imageContainer, { height: isTablet ? 450 : 350 }]}>
         <Image source={{ uri: event.poster || 'https://via.placeholder.com/400x200' }} style={styles.poster} />
         <LinearGradient
           colors={["rgba(0,0,0,0.6)", "transparent", "rgba(0,0,0,0.8)"]}
@@ -183,11 +141,11 @@ export default function EventDetailsScreen() {
             <Share2 color="#fff" size={24} />
           </Pressable>
         </View>
-        <View style={styles.headerContent}>
+        <View style={[styles.headerContent, { paddingHorizontal: isTablet ? 60 : 20, bottom: isTablet ? 50 : 30 }]}>
           <View style={[styles.clubBadge, { backgroundColor: colors.primary }]}>
             <Text style={styles.clubText}>{event.club}</Text>
           </View>
-          <Text style={styles.eventName}>{event.name}</Text>
+          <Text style={[styles.eventName, { fontSize: isTablet ? 44 : 32 }]}>{event.name}</Text>
         </View>
       </View>
 
@@ -196,167 +154,119 @@ export default function EventDetailsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.content, { backgroundColor: colors.background }]}>
-          <View style={styles.statsGrid}>
+        <View style={[styles.content, { backgroundColor: colors.background, paddingHorizontal: isTablet ? 60 : 24 }]}>
+          <View style={[styles.statsGrid, { marginBottom: isTablet ? 32 : 24, gap: isTablet ? 20 : 12 }]}>
             <View style={styles.gridItem}>
               <View style={styles.gridIconHeader}>
                 <Calendar size={20} color={colors.primary} />
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  Date
-                </Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Date</Text>
               </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>
+              <Text style={[styles.statValue, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}>
                 {new Date(event.date).toLocaleDateString()}
               </Text>
             </View>
             <View style={styles.gridItem}>
               <View style={styles.gridIconHeader}>
                 <Clock size={20} color={colors.primary} />
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  Time
-                </Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Time</Text>
               </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {new Date(event.date).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                })}
+              <Text style={[styles.statValue, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}>
+                {new Date(event.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true })}
               </Text>
             </View>
+            {isTablet && (
+              <View style={styles.gridItem}>
+                <View style={styles.gridIconHeader}>
+                  <MapPin size={20} color={colors.primary} />
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Venue</Text>
+                </View>
+                <Text style={[styles.statValue, { color: colors.text, fontSize: 18 }]} numberOfLines={2}>
+                  {event.venue}
+                </Text>
+              </View>
+            )}
+            {isTablet && (
+              <View style={styles.gridItem}>
+                <View style={styles.gridIconHeader}>
+                  <Users size={20} color={colors.primary} />
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Type</Text>
+                </View>
+                <Text style={[styles.statValue, { color: colors.text, fontSize: 18 }]}>
+                  {event.registrationType === "group" ? `${event.minGroupSize}-${event.maxGroupSize}` : "Individual"}
+                </Text>
+              </View>
+            )}
           </View>
 
-          <View style={styles.statsGrid}>
-            <View style={styles.gridItem}>
-              <View style={styles.gridIconHeader}>
-                <MapPin size={20} color={colors.primary} />
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  Venue
+          {!isTablet && (
+            <View style={styles.statsGrid}>
+              <View style={styles.gridItem}>
+                <View style={styles.gridIconHeader}>
+                  <MapPin size={20} color={colors.primary} />
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Venue</Text>
+                </View>
+                <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={2}>
+                  {event.venue}
                 </Text>
               </View>
-              <Text
-                style={[styles.statValue, { color: colors.text }]}
-                numberOfLines={2}
-              >
-                {event.venue}
-              </Text>
-            </View>
-            <View style={styles.gridItem}>
-              <View style={styles.gridIconHeader}>
-                <Users size={20} color={colors.primary} />
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  Type
+              <View style={styles.gridItem}>
+                <View style={styles.gridIconHeader}>
+                  <Users size={20} color={colors.primary} />
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>Type</Text>
+                </View>
+                <Text style={[styles.statValue, { color: colors.text }]}>
+                  {event.registrationType === "group" ? `${event.minGroupSize}-${event.maxGroupSize} People` : "Individual"}
                 </Text>
               </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>
-                {event.registrationType === "group"
-                  ? `${event.minGroupSize}-${event.maxGroupSize} People`
-                  : "Individual"}
-              </Text>
             </View>
+          )}
+
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text, fontSize: isTablet ? 22 : 18 }]}>Description</Text>
+            <Text style={[styles.description, { color: colors.textMuted, fontSize: isTablet ? 17 : 15 }]}>{event.description}</Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Description
-            </Text>
-            <Text style={[styles.description, { color: colors.textMuted }]}>
-              {event.description}
-            </Text>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Rules & Guidelines
-            </Text>
+            <Text style={[styles.sectionTitle, { color: colors.text, fontSize: isTablet ? 22 : 18 }]}>Rules & Guidelines</Text>
             <Card style={styles.rulesCard}>
-              <Text style={[styles.rules, { color: colors.text }]}>
-                {event.rules}
-              </Text>
+              <Text style={[styles.rules, { color: colors.text, fontSize: isTablet ? 16 : 14 }]}>{event.rules}</Text>
             </Card>
           </View>
 
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Club Representative
-            </Text>
+          <View style={[styles.section, isTablet && { width: '50%' }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text, fontSize: isTablet ? 22 : 18 }]}>Club Representative</Text>
             <Card style={styles.repCard}>
               <View style={styles.repInfo}>
-                <View
-                  style={[
-                    styles.repAvatar,
-                    { backgroundColor: colors.primary + "20" },
-                  ]}
-                >
+                <View style={[styles.repAvatar, { backgroundColor: colors.primary + "20" }]}>
                   <Users size={24} color={colors.primary} />
                 </View>
                 <View>
-                  <Text style={[styles.repClubName, { color: colors.text }]}>
-                    {event.club}
-                  </Text>
-                  <Text style={[styles.repMobile, { color: colors.primary }]}>
-                    {event.representativePhone}
-                  </Text>
+                  <Text style={[styles.repClubName, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}>{event.club}</Text>
+                  <Text style={[styles.repMobile, { color: colors.primary, fontSize: isTablet ? 20 : 18 }]}>{event.representativePhone}</Text>
                 </View>
               </View>
             </Card>
           </View>
 
           <View style={styles.deadlineInfo}>
-            <Info
-              size={16}
-              color={isDeadlinePassed ? colors.error : colors.accent}
-            />
-            <Text
-              style={[
-                styles.deadlineText,
-                { color: isDeadlinePassed ? colors.error : colors.accent },
-              ]}
-            >
-              {isDeadlinePassed
-                ? "Registration closed"
-                : `Register before ${new Date(event.deadline).toLocaleDateString()}`}
+            <Info size={16} color={isDeadlinePassed ? colors.error : colors.accent} />
+            <Text style={[styles.deadlineText, { color: isDeadlinePassed ? colors.error : colors.accent }]}>
+              {isDeadlinePassed ? "Registration closed" : `Register before ${new Date(event.deadline).toLocaleDateString()}`}
             </Text>
           </View>
         </View>
-
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      <View
-        style={[
-          styles.footer,
-          { backgroundColor: colors.background, borderTopColor: colors.border },
-        ]}
-      >
+      <View style={[styles.footer, { backgroundColor: colors.background, paddingHorizontal: isTablet ? 60 : 20, paddingBottom: Platform.OS === "ios" ? 40 : 20 }]}>
         {isRegistered && isEventCompleted ? (
-          <Button
-            title="Download Certificate"
-            onPress={handleDownloadCertificate}
-            style={{ ...styles.registerButton, backgroundColor: "#10b981" }}
-            icon={<Award size={20} color="#fff" />}
-          />
+          <Button title="Download Certificate" onPress={handleDownloadCertificate} style={{ ...styles.registerButton, backgroundColor: "#10b981", height: isTablet ? 64 : 56 }} icon={<Award size={20} color="#fff" />} />
         ) : isRegistered ? (
-          <Button
-            title="Already Registered"
-            disabled={true}
-            onPress={() => { }}
-            style={{ ...styles.registerButton, opacity: 0.7 }}
-          />
+          <Button title="Already Registered" disabled={true} onPress={() => { }} style={{ ...styles.registerButton, opacity: 0.7, height: isTablet ? 64 : 56 }} />
         ) : isDeadlinePassed ? (
-          <Button
-            title="Registration Closed"
-            disabled={true}
-            onPress={() => { }}
-            style={{ ...styles.registerButton, opacity: 0.7 }}
-          />
+          <Button title="Registration Closed" disabled={true} onPress={() => { }} style={{ ...styles.registerButton, opacity: 0.7, height: isTablet ? 64 : 56 }} />
         ) : (
-          <Button
-            title="Register Now"
-            disabled={!canRegister}
-            onPress={() => router.push(`/register/${event.id}`)}
-            style={styles.registerButton}
-          />
+          <Button title="Register Now" disabled={!canRegister} onPress={() => router.push(`/register/${event.id}`)} style={{ ...styles.registerButton, height: isTablet ? 64 : 56 }} />
         )}
       </View>
     </View>
@@ -368,8 +278,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   imageContainer: {
-    height: 350,
-    width: width,
     position: "relative",
   },
   poster: {
@@ -397,20 +305,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(0,0,0,0.4)", // Darker semi-transparent background
+    backgroundColor: "rgba(0,0,0,0.4)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
   },
   headerContent: {
     position: "absolute",
-    bottom: 30,
     left: 20,
     right: 20,
   },
@@ -429,7 +331,6 @@ const styles = StyleSheet.create({
   },
   eventName: {
     color: "#fff",
-    fontSize: 32,
     fontWeight: "bold",
   },
   scrollContainer: {
@@ -440,7 +341,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   content: {
-    padding: 24,
     paddingTop: 40,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -448,8 +348,6 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: "row",
-    marginBottom: 24,
-    gap: 12,
   },
   gridItem: {
     flex: 1,
@@ -464,7 +362,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   statValue: {
-    fontSize: 16,
     fontWeight: "bold",
   },
   statLabel: {
@@ -476,19 +373,16 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
     fontWeight: "700",
     marginBottom: 12,
   },
   description: {
-    fontSize: 15,
     lineHeight: 24,
   },
   rulesCard: {
     padding: 16,
   },
   rules: {
-    fontSize: 14,
     lineHeight: 22,
   },
   repCard: {
@@ -507,12 +401,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   repClubName: {
-    fontSize: 16,
     fontWeight: "bold",
     marginBottom: 2,
   },
   repMobile: {
-    fontSize: 18,
     fontWeight: "700",
   },
   deadlineInfo: {
@@ -539,10 +431,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 20,
-    paddingBottom: Platform.OS === "ios" ? 40 : 20,
     borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.05)",
   },
   registerButton: {
-    height: 56,
   },
 });
