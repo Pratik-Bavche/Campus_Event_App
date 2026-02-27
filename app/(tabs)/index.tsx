@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 60,
-    paddingBottom: 30,
+    paddingBottom: 40,
     position: "relative",
     overflow: "hidden",
   },
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.15)",
     marginHorizontal: 24,
-    marginBottom: 24,
+    marginBottom: 20,
     borderRadius: 20,
     paddingVertical: 16,
     borderWidth: 1,

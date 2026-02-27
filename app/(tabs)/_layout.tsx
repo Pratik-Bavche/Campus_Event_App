@@ -33,8 +33,8 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme === 'dark' ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           borderTopColor: colors.border,
-          height: 65,
-          paddingBottom: 10,
+          height: 70,
+          paddingBottom: 15,
           paddingTop: 10,
           marginBottom: 16,
           marginHorizontal: 16,
