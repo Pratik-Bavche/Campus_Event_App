@@ -1,7 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Camera, ChevronRight, Info, LogOut, Save, X } from "lucide-react-native";
+import { Camera, LogOut, Save, X } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   Alert,
@@ -50,34 +50,7 @@ const StatCard = ({ label, count, color, colors, pressed }: StatCardProps) => (
   </View>
 );
 
-interface MenuItemProps {
-  icon: any;
-  label: string;
-  color: string;
-  colors: any;
-  onPress: () => void;
-}
 
-const MenuItem = ({ icon: Icon, label, color, colors, onPress }: MenuItemProps) => (
-  <Pressable
-    onPress={onPress}
-    style={({ pressed }) => [
-      styles.menuItem,
-      { backgroundColor: colors.card, borderBottomColor: colors.border },
-      pressed && { backgroundColor: colors.border + "50" },
-    ]}
-  >
-    <View style={styles.menuItemLeft}>
-      <View
-        style={[styles.menuIconContainer, { backgroundColor: color + "15" }]}
-      >
-        <Icon size={20} color={color} />
-      </View>
-      <Text style={[styles.menuLabel, { color: colors.text }]}>{label}</Text>
-    </View>
-    <ChevronRight size={20} color={colors.textMuted} />
-  </Pressable>
-);
 
 interface InfoFieldProps {
   label: string;
@@ -228,16 +201,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleMenuPress = (label: string) => {
-    switch (label) {
-      case "About":
-        Alert.alert(
-          "About",
-          "College Events App v1.0.0\nDeveloped by the Tech Team.\n\nContact us: support@college.edu",
-        );
-        break;
-    }
-  };
+
 
   const handleStatPress = (tabName: string) => {
     router.push({
@@ -330,16 +294,9 @@ export default function ProfileScreen() {
                 isEditing={isEditing}
                 onChangeText={(text) => setEditForm(prev => ({ ...prev, full_name: text }))}
               />
-              <InfoField
-                label="Roll Number"
-                value={isEditing ? editForm.roll_number : (user?.roll_number || "N/A")}
-                colors={colors}
-                isEditing={isEditing}
-                onChangeText={(text) => setEditForm(prev => ({ ...prev, roll_number: text }))}
-              />
 
               {isEditing ? (
-                <View style={{ marginBottom: 12 }}>
+                <>
                   <Select
                     label="Branch"
                     value={editForm.department}
@@ -347,7 +304,27 @@ export default function ProfileScreen() {
                     options={branchOptions}
                   />
 
-                  <View style={{ marginTop: 12 }}>
+                  <View style={styles.row}>
+                    <InfoField
+                      label="Roll Number"
+                      value={editForm.roll_number}
+                      colors={colors}
+                      isEditing={true}
+                      halfWidth
+                      onChangeText={(text) => setEditForm(prev => ({ ...prev, roll_number: text }))}
+                    />
+                    <InfoField
+                      label="Phone Number"
+                      value={editForm.mobile_number}
+                      colors={colors}
+                      isEditing={true}
+                      halfWidth
+                      keyboardType="phone-pad"
+                      onChangeText={(text) => setEditForm(prev => ({ ...prev, mobile_number: text }))}
+                    />
+                  </View>
+
+                  <View style={{ marginTop: 4 }}>
                     <Select
                       label="Division"
                       value={editForm.division}
@@ -360,7 +337,7 @@ export default function ProfileScreen() {
                     />
                   </View>
 
-                  <View style={{ marginTop: 16 }}>
+                  <View style={{ marginTop: 8 }}>
                     <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Year</Text>
                     <View style={styles.yearSelectionGrid}>
                       {[
@@ -394,13 +371,19 @@ export default function ProfileScreen() {
                       ))}
                     </View>
                   </View>
-                </View>
+                </>
               ) : (
                 <>
+                  <InfoField
+                    label="Department"
+                    value={user?.department || "Not Set"}
+                    colors={colors}
+                  />
+
                   <View style={styles.row}>
                     <InfoField
-                      label="Department"
-                      value={user?.department || "Not Set"}
+                      label="Division"
+                      value={user?.division ? `Division ${user.division}` : "Not Set"}
                       halfWidth
                       colors={colors}
                     />
@@ -414,24 +397,20 @@ export default function ProfileScreen() {
 
                   <View style={styles.row}>
                     <InfoField
-                      label="Division"
-                      value={user?.division ? `Division ${user.division}` : "Not Set"}
+                      label="Roll Number"
+                      value={user?.roll_number || "N/A"}
                       halfWidth
                       colors={colors}
                     />
-                    <View style={{ width: '48%' }} />
+                    <InfoField
+                      label="Phone Number"
+                      value={user?.mobile_number || "Not Set"}
+                      halfWidth
+                      colors={colors}
+                    />
                   </View>
                 </>
               )}
-
-              <InfoField
-                label="Phone Number"
-                value={isEditing ? editForm.mobile_number : (user?.mobile_number || "Not Set")}
-                colors={colors}
-                isEditing={isEditing}
-                keyboardType="phone-pad"
-                onChangeText={(text) => setEditForm(prev => ({ ...prev, mobile_number: text }))}
-              />
 
               {isEditing && (
                 <Button
@@ -516,16 +495,7 @@ export default function ProfileScreen() {
                 </Text>
               </View>
 
-              {/* Menu Section */}
-              <View style={[styles.menuSection, { backgroundColor: colors.card }]}>
-                <MenuItem
-                  icon={Info}
-                  label="About"
-                  color="#3b82f6"
-                  colors={colors}
-                  onPress={() => handleMenuPress("About")}
-                />
-              </View>
+
 
               {/* Logout Button */}
               <Pressable
