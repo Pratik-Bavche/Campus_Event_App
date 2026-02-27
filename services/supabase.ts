@@ -2,15 +2,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
 import "react-native-url-polyfill/auto";
 
+const isServer = typeof window === 'undefined';
+
 // We use AsyncStorage for persistent authentication
 const AsyncStorageAdapter = {
   getItem: (key: string) => {
+    if (isServer) return Promise.resolve(null);
     return AsyncStorage.getItem(key);
   },
   setItem: (key: string, value: string) => {
+    if (isServer) return;
     AsyncStorage.setItem(key, value);
   },
   removeItem: (key: string) => {
+    if (isServer) return;
     AsyncStorage.removeItem(key);
   },
 };

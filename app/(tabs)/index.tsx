@@ -11,6 +11,7 @@ import {
   FlatList,
   Image,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -884,9 +885,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+    ...Platform.select({
+      web: {
+        textShadow: '-1px 1px 10px rgba(0, 0, 0, 0.75)',
+      },
+      default: {
+        textShadowColor: 'rgba(0, 0, 0, 0.75)',
+        textShadowOffset: { width: -1, height: 1 },
+        textShadowRadius: 10,
+      }
+    }),
   },
   scannerFooter: {
     position: 'absolute',

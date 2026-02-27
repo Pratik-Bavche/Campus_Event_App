@@ -163,10 +163,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 15,
         elevation: 15,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 12,
+        ...Platform.select({
+            web: {
+                boxShadow: '0 8px 12px rgba(0, 0, 0, 0.2)',
+            },
+            default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.2,
+                shadowRadius: 12,
+            }
+        }),
     },
     headerTitle: {
         fontWeight: 'bold',
@@ -190,10 +197,17 @@ const styles = StyleSheet.create({
         padding: 28,
         paddingTop: 40,
         elevation: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
-        shadowRadius: 20,
+        ...Platform.select({
+            web: {
+                boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)',
+            },
+            default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 10 },
+                shadowOpacity: 0.15,
+                shadowRadius: 20,
+            }
+        }),
         zIndex: 10,
     },
     formHeader: {
@@ -216,10 +230,17 @@ const styles = StyleSheet.create({
     loginButton: {
         borderRadius: 18,
         elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
+        ...Platform.select({
+            web: {
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+            },
+            default: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+            }
+        }),
     },
     errorText: {
         marginBottom: 20,

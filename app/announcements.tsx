@@ -2,14 +2,14 @@ import { Stack, useRouter } from "expo-router";
 import { ArrowLeft, Megaphone } from "lucide-react-native";
 import React, { useEffect } from "react";
 import {
-    Dimensions,
-    FlatList,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    useColorScheme,
-    View,
+  Dimensions,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
 } from "react-native";
 import { Colors } from "../constants/theme";
 import { useDataStore } from "../store/useDataStore";
@@ -87,10 +87,17 @@ export default function AnnouncementsScreen() {
           alignItems: "center",
           gap: 16,
           elevation: 4,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
+          ...Platform.select({
+            web: {
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.15)",
+            },
+            default: {
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8,
+            }
+          }),
           borderBottomLeftRadius: 30,
           borderBottomRightRadius: 30,
         }}

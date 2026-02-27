@@ -39,8 +39,9 @@ export const useDataStore = create<DataState>((set, get) => ({
         } catch (error: any) {
             set({ isEventsLoading: false });
             const message = error?.message || '';
-            if (message.includes('525')) {
-                console.warn('Network Error (525): SSL handshake failed. This is likely a service issue with Supabase or your connection.');
+            // Using console.log instead of warn/error for these to avoid dev-mode popups while notifying logs
+            if (message.includes('525') || message.includes('Connection error')) {
+                console.log('Handled gracefuly:', message);
             } else {
                 console.warn('Fetch events error', error);
             }
@@ -52,9 +53,14 @@ export const useDataStore = create<DataState>((set, get) => ({
         try {
             const registrations = await registrationService.getMyRegistrations();
             set({ myRegistrations: registrations, isRegistrationsLoading: false });
-        } catch (error) {
+        } catch (error: any) {
             set({ isRegistrationsLoading: false });
-            console.warn('Fetch registrations error', error);
+            const message = error?.message || '';
+            if (message.includes('525') || message.includes('Connection error')) {
+                console.log('Handled gracefuly:', message);
+            } else {
+                console.warn('Fetch registrations error', error);
+            }
         }
     },
 
@@ -63,9 +69,14 @@ export const useDataStore = create<DataState>((set, get) => ({
         try {
             const notifications = await notificationService.getNotifications();
             set({ notifications, isNotificationsLoading: false });
-        } catch (error) {
+        } catch (error: any) {
             set({ isNotificationsLoading: false });
-            console.warn('Fetch notifications error', error);
+            const message = error?.message || '';
+            if (message.includes('525') || message.includes('Connection error')) {
+                console.log('Handled gracefuly:', message);
+            } else {
+                console.warn('Fetch notifications error', error);
+            }
         }
     },
 
@@ -74,9 +85,14 @@ export const useDataStore = create<DataState>((set, get) => ({
         try {
             const announcements = await announcementService.getAnnouncements();
             set({ announcements, isAnnouncementsLoading: false });
-        } catch (error) {
+        } catch (error: any) {
             set({ isAnnouncementsLoading: false });
-            console.warn('Fetch announcements error', error);
+            const message = error?.message || '';
+            if (message.includes('525') || message.includes('Connection error')) {
+                console.log('Handled gracefuly:', message);
+            } else {
+                console.warn('Fetch announcements error', error);
+            }
         }
     },
     cancelRegistration: async (id) => {

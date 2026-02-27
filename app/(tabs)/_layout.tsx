@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Bookmark, Calendar, Home, User } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, useColorScheme, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, useColorScheme, useWindowDimensions } from 'react-native';
 import { Colors } from '../../constants/theme';
 
 const TabButton = (props: any) => {
@@ -44,10 +44,17 @@ export default function TabLayout() {
           alignSelf: 'center',
           borderRadius: 20,
           elevation: 10,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 10,
+          ...Platform.select({
+            web: {
+              boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.1)',
+            },
+            default: {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 10,
+            }
+          }),
           borderTopWidth: 0,
           position: 'absolute',
           borderWidth: 1,

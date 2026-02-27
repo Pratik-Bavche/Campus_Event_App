@@ -4,6 +4,7 @@ import {
     Dimensions,
     FlatList,
     Modal,
+    Platform,
     Pressable,
     StyleSheet,
     Text,
@@ -177,9 +178,16 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 20,
         elevation: 5,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 10,
+        ...Platform.select({
+            web: {
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.25)',
+            },
+            default: {
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 10,
+            }
+        }),
     },
     modalHeader: {
         flexDirection: 'row',
