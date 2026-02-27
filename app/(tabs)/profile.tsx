@@ -162,6 +162,7 @@ export default function ProfileScreen() {
     mobile_number: user?.mobile_number || "",
     department: user?.department || "",
     year: user?.year || 1,
+    division: user?.division || "",
   });
 
   const handleLogout = () => {
@@ -270,6 +271,7 @@ export default function ProfileScreen() {
                     mobile_number: user?.mobile_number || "",
                     department: user?.department || "",
                     year: user?.year || 1,
+                    division: user?.division || "",
                   });
                   setIsEditing(true);
                 }}
@@ -289,12 +291,6 @@ export default function ProfileScreen() {
                   style={styles.cancelHeaderButton}
                 >
                   <X size={20} color="#fff" />
-                </Pressable>
-                <Pressable
-                  onPress={handleSaveProfile}
-                  style={styles.saveHeaderButton}
-                >
-                  <Save size={20} color="#fff" />
                 </Pressable>
               </View>
             )}
@@ -351,6 +347,19 @@ export default function ProfileScreen() {
                     options={branchOptions}
                   />
 
+                  <View style={{ marginTop: 12 }}>
+                    <Select
+                      label="Division"
+                      value={editForm.division}
+                      onSelect={(val) => setEditForm(prev => ({ ...prev, division: val }))}
+                      options={[
+                        { label: 'Division A', value: 'A' },
+                        { label: 'Division B', value: 'B' },
+                        { label: 'Division C', value: 'C' },
+                      ]}
+                    />
+                  </View>
+
                   <View style={{ marginTop: 16 }}>
                     <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Year</Text>
                     <View style={styles.yearSelectionGrid}>
@@ -387,20 +396,32 @@ export default function ProfileScreen() {
                   </View>
                 </View>
               ) : (
-                <View style={styles.row}>
-                  <InfoField
-                    label="Department"
-                    value={user?.department || "Not Set"}
-                    halfWidth
-                    colors={colors}
-                  />
-                  <InfoField
-                    label="Year"
-                    value={user?.year ? `${["", "FE", "SE", "TE", "BE"][user.year] || user.year} Year` : "Not Set"}
-                    halfWidth
-                    colors={colors}
-                  />
-                </View>
+                <>
+                  <View style={styles.row}>
+                    <InfoField
+                      label="Department"
+                      value={user?.department || "Not Set"}
+                      halfWidth
+                      colors={colors}
+                    />
+                    <InfoField
+                      label="Year"
+                      value={user?.year ? `${["", "FE", "SE", "TE", "BE"][user.year] || user.year} Year` : "Not Set"}
+                      halfWidth
+                      colors={colors}
+                    />
+                  </View>
+
+                  <View style={styles.row}>
+                    <InfoField
+                      label="Division"
+                      value={user?.division ? `Division ${user.division}` : "Not Set"}
+                      halfWidth
+                      colors={colors}
+                    />
+                    <View style={{ width: '48%' }} />
+                  </View>
+                </>
               )}
 
               <InfoField
