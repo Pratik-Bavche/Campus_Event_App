@@ -17,21 +17,28 @@ const api = axios.create({
 const handleApiError = (error: any, context: string) => {
     const message = error?.message || 'Unknown error';
 
-    // Check for SSL Handshake error (525)
-    if (message.includes('525') || message.toLowerCase().includes('ssl handshake')) {
-        const errorMsg = 'Network Error (525): SSL handshake failed. This is likely a temporary service issue. Please check your connection or try again later.';
-        console.warn(`${context}: ${errorMsg}`, error);
+    // 1. Check for specific Supabase Auth errors
+    if (message.includes('Invalid login credentials') || message.includes('Email not confirmed')) {
+        const errorMsg = 'Invalid email or password. Please try again.';
+        console.log(`${context}: ${errorMsg}`);
         throw new Error(errorMsg);
     }
 
-    // Check for other common network issues
+    if (message.includes('User already registered') || message.includes('User already exists')) {
+        const errorMsg = 'An account with this email already exists.';
+        console.log(`${context}: ${errorMsg}`);
+        throw new Error(errorMsg);
+    }
+
+
     if (message.toLowerCase().includes('network error') || message.toLowerCase().includes('failed to fetch')) {
         const errorMsg = 'Connection error. Please check your internet connection.';
-        console.warn(`${context}: ${errorMsg}`, error);
+        console.warn(`${context}: ${errorMsg}`);
         throw new Error(errorMsg);
     }
 
-    console.error(`${context}:`, error);
+    // 3. Fallback: Log as info to avoid overlay, then rethrow
+    console.log(`${context}:`, message);
     throw error;
 };
 
@@ -478,7 +485,7 @@ export const attendanceService = {
                 eventId = match[0];
             } else {
                 console.warn('No UUID found in scanned data:', rawEventId);
-                // We'll proceed with eventId as is, which might still trigger the DB error if invalid
+                throw new Error('Invalid QR Code: No valid event ID found.');
             }
 
             // Fetch student profile details needed for attendance table

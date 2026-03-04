@@ -164,8 +164,14 @@ export default function HomeScreen() {
     setShowScanner(false);
 
     try {
-      // The QR code usually contains the event ID
-      // We'll mark attendance using the new attendanceService
+      // Validate that the scanned data contains a UUID (or is a UUID itself)
+      const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+      const isValidQR = uuidRegex.test(data);
+
+      if (!isValidQR) {
+        throw new Error('Invalid QR Code. Please scan the correct event attendance QR.');
+      }
+
       await attendanceService.markAttendance(data, 'QR');
 
       setIsAttendanceMarked(true);
@@ -174,11 +180,22 @@ export default function HomeScreen() {
         { text: 'OK' }
       ]);
     } catch (error: any) {
-      console.error('Attendance marking failed:', error);
-      Alert.alert(
-        'Attendance Error',
-        error.message || 'Failed to record attendance. Please ensure you are scanning the correct event QR code.'
-      );
+      // We don't use console.error here to avoid triggering the Expo developer error overlay
+      // during expected failure cases (like invalid QR codes)
+      console.log('Attendance scan handled:', error.message);
+
+      let errorMsg = 'Failed to record attendance. Please try again.';
+      if (typeof error.message === 'string') {
+        if (error.message.includes('already marked')) {
+          errorMsg = 'Attendance already marked for this event.';
+        } else if (error.message.includes('Invalid QR')) {
+          errorMsg = 'This QR code is invalid. Please scan the event attendance QR.';
+        } else {
+          errorMsg = error.message;
+        }
+      }
+
+      Alert.alert('Attendance Error', errorMsg);
     }
   };
 

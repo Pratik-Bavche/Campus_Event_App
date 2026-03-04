@@ -1,9 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter } from 'expo-router';
-import { ChevronRight, GraduationCap, Lock, Mail } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { ArrowLeft, Mail, Send } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -17,26 +18,26 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Colors } from '../../constants/theme';
-import { authService } from '../../services/api';
-import { useAuthStore } from '../../store/useAuthStore';
 
-export default function LoginScreen() {
+// IMPORTANT: Replace with your backend URL
+// For development using physical device, use your machine's local IP (e.g., http://192.168.1.x:5000)
+const BACKEND_URL = 'http://10.15.148.99:5000'; // Using the IP from your Expo logs
+
+export default function ForgotPasswordScreen() {
     const { width, height } = useWindowDimensions();
     const isTablet = width >= 768;
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isSuccess, setIsSuccess] = useState(false);
 
     const router = useRouter();
-    const setUser = useAuthStore(state => state.setUser);
-    const setToken = useAuthStore(state => state.setToken);
     const theme = useColorScheme() ?? 'light';
     const colors = Colors[theme];
 
-    const handleLogin = async () => {
-        if (!email || !password) {
-            setError('Please fill in all mandatory fields');
+    const handleSendResetLink = async () => {
+        if (!email) {
+            setError('Please enter your registered email');
             return;
         }
 
@@ -44,14 +45,20 @@ export default function LoginScreen() {
         setError('');
 
         try {
-            const { token, user } = await authService.login(email, '', password);
-            await AsyncStorage.setItem('auth_token', token);
-            await AsyncStorage.setItem('user_data', JSON.stringify(user));
-            setToken(token);
-            setUser(user);
-            router.replace('/(tabs)');
+            // Calling the backend API I created earlier
+            const response = await axios.post(`${BACKEND_URL}/api/forgot-password`, { email });
+
+            setIsSuccess(true);
+            Alert.alert(
+                'Link Sent',
+                'If an account exists with this email, you will receive a password reset link shortly.',
+                [{ text: 'OK', onPress: () => router.back() }]
+            );
         } catch (err: any) {
-            setError(err.message || 'Invalid credentials');
+            console.error('Forgot password error:', err);
+            // Even on error, we might want to show the same message for security, 
+            // but for now let's show the error if it's a connectivity issue
+            setError(err.response?.data?.message || 'Failed to send reset link. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -61,14 +68,17 @@ export default function LoginScreen() {
         <View style={{ flex: 1, backgroundColor: colors.background }}>
             <LinearGradient
                 colors={colors.headerGradient as any}
-                style={[styles.headerGradient, { height: isTablet ? height * 0.45 : height * 0.4 }]}
+                style={[styles.headerGradient, { height: isTablet ? height * 0.4 : height * 0.35 }]}
             >
                 <View style={[styles.headerContent, { paddingHorizontal: isTablet ? 60 : 30 }]}>
-                    <View style={[styles.logoContainer, isTablet && { width: 100, height: 100, borderRadius: 28 }]}>
-                        <GraduationCap color={colors.primary} size={isTablet ? 60 : 42} />
-                    </View>
-                    <Text style={[styles.headerTitle, { fontSize: isTablet ? 42 : 30 }]}>Welcome Back</Text>
-                    <Text style={[styles.headerSubtitle, { fontSize: isTablet ? 18 : 14 }]}>Login to access your campus dashboard</Text>
+                    <TouchableOpacity
+                        onPress={() => router.back()}
+                        style={styles.backButton}
+                    >
+                        <ArrowLeft color="#fff" size={24} />
+                    </TouchableOpacity>
+                    <Text style={[styles.headerTitle, { fontSize: isTablet ? 36 : 28 }]}>Reset Password</Text>
+                    <Text style={[styles.headerSubtitle, { fontSize: isTablet ? 16 : 14 }]}>Enter your email to receive a reset link</Text>
                 </View>
             </LinearGradient>
 
@@ -90,12 +100,16 @@ export default function LoginScreen() {
                         isTablet && { width: 500, padding: 48 }
                     ]}>
                         <View style={styles.formHeader}>
-                            <Text style={[styles.formTitle, { color: colors.text, fontSize: isTablet ? 28 : 22 }]}>Student Login</Text>
+                            <Text style={[styles.formTitle, { color: colors.text, fontSize: isTablet ? 24 : 20 }]}>Forgot Password?</Text>
                             <View style={[styles.titleSeparator, { backgroundColor: colors.primary }]} />
                         </View>
 
+                        <Text style={[styles.instructionText, { color: colors.textMuted }]}>
+                            Don't worry! It happens. Please enter the email address associated with your account.
+                        </Text>
+
                         <Input
-                            label="College Email"
+                            label="Registration Email"
                             value={email}
                             onChangeText={setEmail}
                             keyboardType="email-address"
@@ -103,39 +117,23 @@ export default function LoginScreen() {
                             icon={<Mail size={20} color={colors.textMuted} />}
                         />
 
-                        <Input
-                            label="Password"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry
-                            icon={<Lock size={20} color={colors.textMuted} />}
-                        />
-
-                        <TouchableOpacity
-                            style={styles.forgotPassword}
-                            onPress={() => router.push('/(auth)/forgot-password')}
-                        >
-                            <Text style={{ color: colors.primary, fontSize: isTablet ? 14 : 13, fontWeight: '600' }}>Forgot Password?</Text>
-                        </TouchableOpacity>
-
                         {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
 
                         <Button
-                            title="Sign In"
-                            onPress={handleLogin}
+                            title="Send Reset Link"
+                            onPress={handleSendResetLink}
                             loading={isLoading}
-                            style={{ ...styles.loginButton, height: isTablet ? 64 : 58 }}
-                            icon={<ChevronRight size={20} color="#fff" />}
+                            style={{ ...styles.resetButton, height: isTablet ? 64 : 58 }}
+                            icon={<Send size={20} color="#fff" />}
+                            disabled={isSuccess}
                         />
 
-                        <View style={styles.footer}>
-                            <Text style={{ color: colors.textMuted, fontSize: isTablet ? 15 : 14 }}>Don't have an account? </Text>
-                            <Link href="/signup" asChild>
-                                <TouchableOpacity>
-                                    <Text style={{ color: colors.primary, fontWeight: '700', fontSize: isTablet ? 15 : 14 }}>Create One</Text>
-                                </TouchableOpacity>
-                            </Link>
-                        </View>
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={styles.backToLogin}
+                        >
+                            <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Back to Login</Text>
+                        </TouchableOpacity>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -156,27 +154,13 @@ const styles = StyleSheet.create({
     },
     headerContent: {
         alignItems: 'center',
+        width: '100%',
     },
-    logoContainer: {
-        width: 75,
-        height: 75,
-        borderRadius: 22,
-        backgroundColor: '#fff',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 15,
-        elevation: 15,
-        ...Platform.select({
-            web: {
-                boxShadow: '0 8px 12px rgba(0, 0, 0, 0.2)',
-            },
-            default: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.2,
-                shadowRadius: 12,
-            }
-        }),
+    backButton: {
+        position: 'absolute',
+        top: -20,
+        left: 20,
+        padding: 10,
     },
     headerTitle: {
         fontWeight: 'bold',
@@ -214,7 +198,7 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     formHeader: {
-        marginBottom: 24,
+        marginBottom: 16,
     },
     formTitle: {
         fontWeight: 'bold',
@@ -225,14 +209,15 @@ const styles = StyleSheet.create({
         height: 4,
         borderRadius: 2,
     },
-    forgotPassword: {
-        alignSelf: 'flex-end',
+    instructionText: {
+        fontSize: 14,
+        lineHeight: 22,
         marginBottom: 24,
-        marginTop: -4,
     },
-    loginButton: {
+    resetButton: {
         borderRadius: 18,
         elevation: 4,
+        marginTop: 10,
         ...Platform.select({
             web: {
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
@@ -251,9 +236,8 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         fontSize: 14,
     },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 30,
+    backToLogin: {
+        marginTop: 24,
+        alignItems: 'center',
     },
 });
