@@ -8,6 +8,7 @@ import {
   Image,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   useColorScheme,
@@ -28,6 +29,8 @@ export default function RegistrationsScreen() {
     fetchRegistrations,
     isRegistrationsLoading,
     cancelRegistration,
+    myFeedbacks,
+    fetchFeedbacks,
   } = useDataStore();
   const { tab } = useLocalSearchParams();
   const [selectedTab, setSelectedTab] = useState("All");
@@ -35,8 +38,18 @@ export default function RegistrationsScreen() {
   const colors = Colors[theme];
   const router = useRouter();
 
+  const [now, setNow] = useState(new Date());
+
   useEffect(() => {
     fetchRegistrations();
+    fetchFeedbacks();
+
+    // Timer to refresh status in real-time every minute
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -49,10 +62,13 @@ export default function RegistrationsScreen() {
 
   const filteredRegistrations = myRegistrations.filter((reg: Registration) => {
     if (selectedTab === "All") return reg.status !== "CANCELLED";
-    if (selectedTab === "Completed")
-      return (
-        reg.event && new Date(reg.event.date) <= new Date() && reg.status !== "CANCELLED"
-      );
+
+    const deadlineStr = reg.event?.deadline;
+    const isPastDeadline = deadlineStr ? new Date(deadlineStr).getTime() <= now.getTime() : false;
+
+    if (selectedTab === "Completed") {
+      return reg.event && isPastDeadline && reg.status !== "CANCELLED";
+    }
     if (selectedTab === "Cancelled") return reg.status === "CANCELLED";
     return true;
   });
@@ -92,7 +108,7 @@ export default function RegistrationsScreen() {
 
   const renderRegistrationItem = ({ item }: { item: Registration }) => {
     const isCancelled = item.status === "CANCELLED";
-    const isCompleted = item.event ? new Date(item.event.date) <= new Date() : false;
+    const isCompleted = item.event ? new Date(item.event.deadline).getTime() <= now.getTime() : false;
 
     if (!item.event) return null;
 
@@ -178,44 +194,84 @@ export default function RegistrationsScreen() {
             )}
 
             {(isCancelled || isCompleted) && (
-              <View style={styles.actionRow}>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.actionButton,
-                    { backgroundColor: colors.primary + "10" },
-                    { transform: [{ scale: pressed ? 0.98 : 1 }] },
-                  ]}
-                  onPress={() => router.push(`/event/${item.event?.id}`)}
-                >
-                  <Text
-                    style={[styles.actionButtonText, { color: colors.primary }]}
-                  >
-                    View Details
-                  </Text>
-                </Pressable>
-                {isCompleted && !isCancelled && (
+              <View style={{ gap: 8 }}>
+                <View style={styles.actionRow}>
                   <Pressable
                     style={({ pressed }) => [
                       styles.actionButton,
-                      { backgroundColor: "#10b98115" },
+                      { backgroundColor: colors.primary + "10" },
                       { transform: [{ scale: pressed ? 0.98 : 1 }] },
                     ]}
-                    onPress={() => handleDownloadCertificate(item.event?.name || 'Event')}
+                    onPress={() => router.push(`/event/${item.event?.id}`)}
                   >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
+                    <Text
+                      style={[styles.actionButtonText, { color: colors.primary }]}
                     >
-                      <Award size={14} color="#10b981" />
-                      <Text
-                        style={[styles.actionButtonText, { color: "#10b981" }]}
+                      View Details
+                    </Text>
+                  </Pressable>
+                  {isCompleted && !isCancelled && (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.actionButton,
+                        { backgroundColor: "#10b98115" },
+                        { transform: [{ scale: pressed ? 0.98 : 1 }] },
+                      ]}
+                      onPress={() => handleDownloadCertificate(item.event?.name || 'Event')}
+                    >
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
                       >
-                        Certificate
-                      </Text>
-                    </View>
+                        <Award size={14} color="#10b981" />
+                        <Text
+                          style={[styles.actionButtonText, { color: "#10b981" }]}
+                        >
+                          Certificate
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+                </View>
+
+                {isCompleted && !isCancelled && (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.feedbackButton,
+                      {
+                        backgroundColor: myFeedbacks.some(f => f.event_id === item.event_id)
+                          ? colors.textMuted + "10"
+                          : colors.primary,
+                      },
+                      { transform: [{ scale: pressed ? 0.98 : 1 }] },
+                    ]}
+                    onPress={() => {
+                      if (!myFeedbacks.some(f => f.event_id === item.event_id)) {
+                        router.push({
+                          pathname: "/feedback",
+                          params: { eventId: item.event_id }
+                        });
+                      }
+                    }}
+                    disabled={myFeedbacks.some(f => f.event_id === item.event_id)}
+                  >
+                    <Text
+                      style={[
+                        styles.feedbackButtonText,
+                        {
+                          color: myFeedbacks.some(f => f.event_id === item.event_id)
+                            ? colors.textMuted
+                            : "#fff",
+                        },
+                      ]}
+                    >
+                      {myFeedbacks.some(f => f.event_id === item.event_id)
+                        ? "Feedback Given"
+                        : "Give Feedback"}
+                    </Text>
                   </Pressable>
                 )}
               </View>
@@ -294,6 +350,17 @@ export default function RegistrationsScreen() {
             { paddingHorizontal: isTablet ? 0 : 20, paddingTop: 16 }
           ]}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRegistrationsLoading}
+              onRefresh={() => {
+                fetchRegistrations();
+                fetchFeedbacks();
+              }}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Text style={{ color: colors.textMuted }}>
@@ -407,6 +474,17 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 13,
     fontWeight: "600",
+  },
+  feedbackButton: {
+    width: "100%",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  feedbackButtonText: {
+    fontSize: 14,
+    fontWeight: "bold",
   },
   center: {
     flex: 1,

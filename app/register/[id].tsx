@@ -22,7 +22,7 @@ import { useDataStore } from '../../store/useDataStore';
 import { Event } from '../../types';
 
 export default function RegistrationFlow() {
-    const { id } = useLocalSearchParams();
+    const { id, mode } = useLocalSearchParams();
     const [event, setEvent] = useState<Event | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [regType, setRegType] = useState<'individual' | 'group' | null>(null);
@@ -42,6 +42,17 @@ export default function RegistrationFlow() {
             try {
                 const data = await eventService.getEventById(id as string);
                 setEvent(data);
+                
+                // Auto-select registration type based on mode or event configuration
+                if (mode === 'group') {
+                    setRegType('group');
+                } else if (data.registrationType === 'individual') {
+                    // Individual registration shouldn't reach here (handled in event details)
+                    setRegType('individual');
+                } else if (data.registrationType === 'group') {
+                    setRegType('group');
+                }
+                // For 'both', leave regType as null to show selection
             } catch (error) {
                 console.error('Fetch event detail error', error);
             } finally {
@@ -49,7 +60,7 @@ export default function RegistrationFlow() {
             }
         };
         fetchEvent();
-    }, [id]);
+    }, [id, mode]);
 
     const handleRegister = async () => {
         setIsSubmitting(true);
@@ -131,7 +142,7 @@ export default function RegistrationFlow() {
                     <Text style={[styles.contextClubName, { color: colors.primary }]}>{event?.club}</Text>
                 </View>
 
-                {!regType && (
+                {!regType && event?.registrationType === 'both' && (
                     <View style={styles.choiceSection}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Choose Registration Type</Text>
                         <View style={styles.choiceRow}>

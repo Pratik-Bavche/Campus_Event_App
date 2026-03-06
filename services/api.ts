@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Config } from '../constants/Config';
-import { Announcement, Attendance, Event, Notification, Registration, User } from '../types';
+import { Announcement, Attendance, Event, Feedback, Notification, Registration, User } from '../types';
 import { supabase } from './supabase';
 
 // In a real app, this would be your base URL from env
@@ -127,6 +127,18 @@ export const authService = {
     },
 };
 
+/**
+ * Map database registration_type values to frontend values
+ */
+const mapRegistrationType = (dbValue: string): 'individual' | 'group' | 'both' => {
+    const typeMap: Record<string, 'individual' | 'group' | 'both'> = {
+        'INDIVIDUAL': 'individual',
+        'TEAM': 'group',
+        'BOTH': 'both'
+    };
+    return typeMap[dbValue?.toUpperCase()] || 'both'; // Default to 'both' if not specified
+};
+
 export const eventService = {
     getEvents: async (): Promise<Event[]> => {
         try {
@@ -151,7 +163,7 @@ export const eventService = {
                 deadline: e.registration_deadline || e.date_time, // Fallback to event date if no deadline
                 poster: e.poster_url || 'https://via.placeholder.com/400x200',
                 isClosed: e.status !== 'ACTIVE',
-                registrationType: 'individual', // Defaulting as logic needs clarification
+                registrationType: mapRegistrationType(e.registration_type),
                 status: e.status === 'ACTIVE' ? 'Open' : 'Closed',
                 maxCapacity: e.event_limit,
                 representativePhone: e.contact_person || '',
@@ -182,7 +194,7 @@ export const eventService = {
                 deadline: e.registration_deadline || e.date_time,
                 poster: e.poster_url || 'https://via.placeholder.com/400x200',
                 isClosed: e.status !== 'ACTIVE',
-                registrationType: 'individual',
+                registrationType: mapRegistrationType(e.registration_type),
                 status: e.status === 'ACTIVE' ? 'Open' : 'Closed',
                 maxCapacity: e.event_limit,
                 representativePhone: e.contact_person || '',
@@ -253,10 +265,109 @@ export const eventService = {
                 year: data.year,
                 status: data.status,
                 registered_at: data.registered_at,
-                event: { ...data.events, name: data.events.title } as any,
+                event: {
+                    id: data.events.id,
+                    name: data.events.title,
+                    club: 'Student Club', // Or from events data if available
+                    clubId: data.events.club_id,
+                    description: data.events.description,
+                    rules: data.events.eligibility,
+                    venue: data.events.venue,
+                    date: data.events.date_time,
+                    deadline: data.events.registration_deadline || data.events.date_time,
+                    poster: data.events.poster_url,
+                    isClosed: data.events.status !== 'ACTIVE',
+                    registrationType: 'individual',
+                    status: data.events.status === 'ACTIVE' ? 'Open' : 'Closed',
+                    maxCapacity: data.events.event_limit,
+                    representativePhone: data.events.contact_person
+                } as any,
             };
         } catch (error) {
             return handleApiError(error, 'eventService.registerForEvent');
+        }
+    },
+    registerForEventImmediate: async (eventId: string): Promise<Registration> => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || !user.email) throw new Error('User not authenticated');
+
+            // Fetch student profile details needed for registration table
+            const { data: profile, error: profileError } = await supabase
+                .from('students')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (profileError || !profile) {
+                console.error('Error fetching student profile for registration:', profileError);
+                throw new Error('Could not fetch student profile. Please update your profile first.');
+            }
+
+            // Check for existing registration
+            const { data: existingReg } = await supabase
+                .from('registrations')
+                .select('id')
+                .eq('event_id', eventId)
+                .eq('email', user.email)
+                .neq('status', 'CANCELLED')
+                .single();
+
+            if (existingReg) {
+                throw new Error('You are already registered for this event.');
+            }
+
+            const { data, error } = await supabase
+                .from('registrations')
+                .insert({
+                    event_id: eventId,
+                    roll_no: profile.roll_number,
+                    name: profile.full_name,
+                    email: user.email,
+                    department: profile.department,
+                    year: profile.year?.toString(),
+                    division: profile.division,
+                    status: 'REGISTERED',
+                })
+                .select(`
+                    *,
+                    events (*)
+                `)
+                .single();
+
+            if (error) throw error;
+
+            return {
+                id: data.id,
+                event_id: data.event_id,
+                student_id: user.id,
+                roll_no: data.roll_no,
+                name: data.name,
+                email: data.email,
+                department: data.department,
+                year: data.year,
+                status: data.status,
+                registered_at: data.registered_at,
+                event: {
+                    id: data.events.id,
+                    name: data.events.title,
+                    club: 'Student Club',
+                    clubId: data.events.club_id,
+                    description: data.events.description,
+                    rules: data.events.eligibility,
+                    venue: data.events.venue,
+                    date: data.events.date_time,
+                    deadline: data.events.registration_deadline || data.events.date_time,
+                    poster: data.events.poster_url,
+                    isClosed: data.events.status !== 'ACTIVE',
+                    registrationType: mapRegistrationType(data.events.registration_type),
+                    status: data.events.status === 'ACTIVE' ? 'Open' : 'Closed',
+                    maxCapacity: data.events.event_limit,
+                    representativePhone: data.events.contact_person
+                } as any,
+            };
+        } catch (error) {
+            return handleApiError(error, 'eventService.registerForEventImmediate');
         }
     },
 };
@@ -282,35 +393,38 @@ export const registrationService = {
             }
 
             if (!data) return [];
-            return data.map((r: any) => ({
-                id: r.id,
-                event_id: r.event_id,
-                student_id: user.id,
-                roll_no: r.roll_no,
-                name: r.name,
-                email: r.email,
-                department: r.department,
-                year: r.year,
-                status: r.status,
-                registered_at: r.registered_at,
-                event: {
-                    id: r.events.id,
-                    name: r.events.title,
-                    club: 'Student Club',
-                    clubId: r.events.club_id,
-                    description: r.events.description,
-                    rules: r.events.eligibility,
-                    venue: r.events.venue,
-                    date: r.events.date_time,
-                    deadline: r.events.registration_deadline,
-                    poster: r.events.poster_url,
-                    isClosed: r.events.status !== 'ACTIVE',
-                    registrationType: 'individual',
-                    status: r.events.status === 'ACTIVE' ? 'Open' : 'Closed',
-                    maxCapacity: r.events.event_limit,
-                    representativePhone: r.events.contact_person
-                }
-            }));
+            return data.map((r: any) => {
+                const eventData = r.events || r.event; // Handle both plural and singular relations
+                return {
+                    id: r.id,
+                    event_id: r.event_id,
+                    student_id: user.id,
+                    roll_no: r.roll_no,
+                    name: r.name,
+                    email: r.email,
+                    department: r.department,
+                    year: r.year,
+                    status: r.status,
+                    registered_at: r.registered_at,
+                    event: eventData ? {
+                        id: eventData.id,
+                        name: eventData.title,
+                        club: 'Student Club',
+                        clubId: eventData.club_id,
+                        description: eventData.description,
+                        rules: eventData.eligibility,
+                        venue: eventData.venue,
+                        date: eventData.date_time,
+                        deadline: eventData.registration_deadline || eventData.date_time,
+                        poster: eventData.poster_url,
+                        isClosed: eventData.status !== 'ACTIVE',
+                        registrationType: 'individual',
+                        status: eventData.status === 'ACTIVE' ? 'Open' : 'Closed',
+                        maxCapacity: eventData.event_limit,
+                        representativePhone: eventData.contact_person
+                    } : undefined
+                };
+            });
         } catch (e) {
             console.warn('Exception fetching registrations:', e);
             return [];
@@ -548,5 +662,63 @@ export const attendanceService = {
     }
 };
 
+
+export const feedbackService = {
+    submitFeedback: async (feedback: Omit<Feedback, 'id' | 'created_at'>): Promise<Feedback> => {
+        try {
+            const { data, error } = await supabase
+                .from('feedback')
+                .insert([feedback])
+                .select()
+                .single();
+
+            if (error) {
+                if (error.code === '23505') {
+                    throw new Error('You have already submitted feedback for this event.');
+                }
+                throw error;
+            }
+
+            return data as Feedback;
+        } catch (error) {
+            return handleApiError(error, 'feedbackService.submitFeedback');
+        }
+    },
+    getFeedbackForEvent: async (eventId: string, email: string): Promise<Feedback | null> => {
+        try {
+            const { data, error } = await supabase
+                .from('feedback')
+                .select('*')
+                .eq('event_id', eventId)
+                .eq('student_email', email)
+                .maybeSingle();
+
+            if (error) throw error;
+            return data as Feedback | null;
+        } catch (error) {
+            console.warn('getFeedbackForEvent failed', error);
+            return null;
+        }
+    },
+    getMyFeedbacks: async (): Promise<Feedback[]> => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || !user.email) return [];
+
+            const { data, error } = await supabase
+                .from('feedback')
+                .select('*')
+                .eq('student_email', user.email);
+
+            if (error) throw error;
+            return data as Feedback[];
+        } catch (error) {
+            console.warn('getMyFeedbacks failed', error);
+            return [];
+        }
+    }
+};
+
 export default api;
+
 

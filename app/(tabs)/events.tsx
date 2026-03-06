@@ -7,12 +7,13 @@ import {
   Image,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   useColorScheme,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
@@ -33,8 +34,16 @@ export default function EventsScreen() {
   const theme = useColorScheme() ?? "light";
   const colors = Colors[theme];
 
+  const [now, setNow] = useState(new Date());
+
   useEffect(() => {
     fetchEvents();
+
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -42,6 +51,9 @@ export default function EventsScreen() {
       setSearchQuery((q as string) || "");
     }
   }, [q]);
+
+  const categories = ["All Events", "Technical", "Cultural", "Sports"];
+  const statuses = ["All", "Open", "Closed", "Completed"];
 
   useEffect(() => {
     let filtered = events.filter(
@@ -59,98 +71,106 @@ export default function EventsScreen() {
     }
 
     if (selectedStatus !== "All") {
-      filtered = filtered.filter((e) => e.status === selectedStatus);
+      filtered = filtered.filter((e) => {
+        const isDeadlinePassed = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
+        if (selectedStatus === "Completed") return isDeadlinePassed;
+        if (selectedStatus === "Open") return e.status === "Open" && !isDeadlinePassed;
+        if (selectedStatus === "Closed") return e.status === "Closed" || isDeadlinePassed;
+        return e.status === selectedStatus;
+      });
     }
 
     setFilteredEvents(filtered);
-  }, [searchQuery, events, selectedCategory, selectedStatus]);
+  }, [searchQuery, events, selectedCategory, selectedStatus, now]);
 
-  const categories = ["All Events", "Technical", "Cultural", "Sports"];
-  const statuses = ["All", "Open", "Closed"];
+  const renderEventItem = ({ item }: { item: any }) => {
+    const isDeadlinePassed = item.deadline ? new Date(item.deadline).getTime() <= now.getTime() : false;
+    const displayStatus = isDeadlinePassed ? "Completed" : item.status;
 
-  const renderEventItem = ({ item }: { item: any }) => (
-    <Card
-      style={[styles.eventCard, { width: isTablet ? '48%' : '100%' }]}
-      onPress={() => router.push(`/event/${item.id}`)}
-    >
-      <View style={[styles.eventRow, { gap: isTablet ? 20 : 16 }]}>
-        <Image
-          source={{ uri: item.poster || 'https://via.placeholder.com/400x200' }}
-          style={[styles.eventImage, { width: isTablet ? 120 : 100, height: isTablet ? 120 : 100 }]}
-        />
-        <View style={styles.eventInfo}>
-          <View style={styles.titleRow}>
-            <Text
-              style={[styles.eventName, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}
-              numberOfLines={2}
-            >
-              {item.name}
-            </Text>
-            <View
-              style={[
-                styles.statusBadge,
-                {
-                  backgroundColor:
-                    item.status === "Open"
-                      ? colors.success + "15"
-                      : colors.error + "15",
-                },
-              ]}
-            >
+    return (
+      <Card
+        style={[styles.eventCard, { width: isTablet ? '48%' : '100%' }]}
+        onPress={() => router.push(`/event/${item.id}`)}
+      >
+        <View style={[styles.eventRow, { gap: isTablet ? 20 : 16 }]}>
+          <Image
+            source={{ uri: item.poster || 'https://via.placeholder.com/400x200' }}
+            style={[styles.eventImage, { width: isTablet ? 120 : 100, height: isTablet ? 120 : 100 }]}
+          />
+          <View style={styles.eventInfo}>
+            <View style={styles.titleRow}>
               <Text
+                style={[styles.eventName, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}
+                numberOfLines={2}
+              >
+                {item.name}
+              </Text>
+              <View
                 style={[
-                  styles.statusText,
+                  styles.statusBadge,
                   {
-                    color:
-                      item.status === "Open" ? colors.success : colors.error,
+                    backgroundColor:
+                      displayStatus === "Open"
+                        ? colors.success + "15"
+                        : colors.error + "15",
                   },
                 ]}
               >
-                {item.status}
-              </Text>
+                <Text
+                  style={[
+                    styles.statusText,
+                    {
+                      color:
+                        displayStatus === "Open" ? colors.success : colors.error,
+                    },
+                  ]}
+                >
+                  {displayStatus}
+                </Text>
+              </View>
             </View>
-          </View>
 
-          <View style={styles.clubRow}>
-            <View style={[styles.clubIcon, { backgroundColor: colors.border }]}>
-              <Hash size={12} color={colors.textMuted} />
+            <View style={styles.clubRow}>
+              <View style={[styles.clubIcon, { backgroundColor: colors.border }]}>
+                <Hash size={12} color={colors.textMuted} />
+              </View>
+              <Text style={[styles.clubName, { color: colors.textMuted, fontSize: isTablet ? 14 : 13 }]}>
+                {item.club}
+              </Text>
             </View>
-            <Text style={[styles.clubName, { color: colors.textMuted, fontSize: isTablet ? 14 : 13 }]}>
-              {item.club}
-            </Text>
-          </View>
 
-          <View style={styles.detailsRow}>
-            <View style={styles.detailItem}>
-              <Calendar size={14} color={colors.textMuted} />
-              <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                {new Date(item.date).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}
-              </Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Clock size={14} color={colors.textMuted} />
-              <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                {new Date(item.date).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                })}
-              </Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Users size={14} color={colors.textMuted} />
-              <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                {item.registeredCount || 0}/{item.maxCapacity || "∞"}
-              </Text>
+            <View style={styles.detailsRow}>
+              <View style={styles.detailItem}>
+                <Calendar size={14} color={colors.textMuted} />
+                <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                  {new Date(item.date).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </Text>
+              </View>
+              <View style={styles.detailItem}>
+                <Clock size={14} color={colors.textMuted} />
+                <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                  {new Date(item.date).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </Text>
+              </View>
+              <View style={styles.detailItem}>
+                <Users size={14} color={colors.textMuted} />
+                <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                  {item.registeredCount || 0}/{item.maxCapacity || "∞"}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
-    </Card>
-  );
+      </Card>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -268,6 +288,14 @@ export default function EventsScreen() {
           keyExtractor={(item) => item.id}
           numColumns={isTablet ? 2 : 1}
           columnWrapperStyle={isTablet ? { gap: 16, paddingHorizontal: 40 } : null}
+          refreshControl={
+            <RefreshControl
+              refreshing={isEventsLoading}
+              onRefresh={fetchEvents}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
           contentContainerStyle={[
             styles.listContent,
             { paddingHorizontal: isTablet ? 0 : 24, paddingTop: 8 }

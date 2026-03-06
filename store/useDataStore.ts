@@ -1,20 +1,24 @@
 import { create } from 'zustand';
-import { announcementService, eventService, notificationService, registrationService } from '../services/api';
-import { Announcement, Event, Notification, Registration } from '../types';
+import { announcementService, eventService, feedbackService, notificationService, registrationService } from '../services/api';
+import { Announcement, Event, Feedback, Notification, Registration } from '../types';
 
 interface DataState {
     events: Event[];
     myRegistrations: Registration[];
+    myFeedbacks: Feedback[];
     notifications: Notification[];
     announcements: Announcement[];
     isEventsLoading: boolean;
     isRegistrationsLoading: boolean;
     isNotificationsLoading: boolean;
     isAnnouncementsLoading: boolean;
+    isFeedbacksLoading: boolean;
     fetchEvents: () => Promise<void>;
     fetchRegistrations: () => Promise<void>;
     fetchNotifications: () => Promise<void>;
     fetchAnnouncements: () => Promise<void>;
+    fetchFeedbacks: () => Promise<void>;
+    submitFeedback: (feedback: Omit<Feedback, 'id' | 'created_at'>) => Promise<void>;
     cancelRegistration: (id: string) => Promise<void>;
     addRegistration: (reg: Registration) => void;
     removeRegistration: (id: string) => void;
@@ -24,12 +28,14 @@ interface DataState {
 export const useDataStore = create<DataState>((set, get) => ({
     events: [],
     myRegistrations: [],
+    myFeedbacks: [],
     notifications: [],
     announcements: [],
     isEventsLoading: false,
     isRegistrationsLoading: false,
     isNotificationsLoading: false,
     isAnnouncementsLoading: false,
+    isFeedbacksLoading: false,
 
     fetchEvents: async () => {
         set({ isEventsLoading: true });
@@ -93,6 +99,29 @@ export const useDataStore = create<DataState>((set, get) => ({
             } else {
                 console.warn('Fetch announcements error', error);
             }
+        }
+    },
+
+    fetchFeedbacks: async () => {
+        set({ isFeedbacksLoading: true });
+        try {
+            const feedbacks = await feedbackService.getMyFeedbacks();
+            set({ myFeedbacks: feedbacks, isFeedbacksLoading: false });
+        } catch (error) {
+            set({ isFeedbacksLoading: false });
+            console.warn('Fetch feedbacks error', error);
+        }
+    },
+
+    submitFeedback: async (feedbackData) => {
+        try {
+            const feedback = await feedbackService.submitFeedback(feedbackData);
+            set((state) => ({
+                myFeedbacks: [...state.myFeedbacks, feedback],
+            }));
+        } catch (error) {
+            console.error('Submit feedback error', error);
+            throw error;
         }
     },
     cancelRegistration: async (id) => {

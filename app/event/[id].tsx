@@ -51,8 +51,11 @@ export default function EventDetailsScreen() {
   const validId = getValidEventId(rawId);
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { myRegistrations, fetchRegistrations } = useDataStore();
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
+  const { myRegistrations, fetchRegistrations, addRegistration } = useDataStore();
 
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
@@ -90,6 +93,34 @@ export default function EventDetailsScreen() {
     );
   };
 
+  const handleRegisterClick = async () => {
+    if (!event) return;
+
+    const registationType = event.registrationType as 'individual' | 'group' | 'both';
+
+    // Case 1: INDIVIDUAL - Register immediately
+    if (registationType === 'individual') {
+      setIsRegistering(true);
+      try {
+        const registration = await eventService.registerForEventImmediate(event.id);
+        addRegistration(registration);
+        setRegistrationSuccess(true);
+        setRegistrationError(null);
+      } catch (err: any) {
+        setRegistrationError(err.message || 'Registration failed. Please try again.');
+        setIsRegistering(false);
+      }
+    }
+    // Case 2: TEAM - Navigate to registration page with group-only mode
+    else if (registationType === 'group') {
+      router.push(`/register/${event.id}?mode=group`);
+    }
+    // Case 3: BOTH - Navigate to registration page with both options
+    else if (registationType === 'both') {
+      router.push(`/register/${event.id}`);
+    }
+  };
+
   const handleShareEvent = async () => {
     if (!event) return;
     try {
@@ -103,6 +134,25 @@ export default function EventDetailsScreen() {
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (registrationSuccess) {
+    return (
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <View style={[styles.successIcon, { backgroundColor: colors.success + '20' }]}>
+          <Award size={60} color={colors.success} />
+        </View>
+        <Text style={[styles.successTitle, { color: colors.text }]}>Registration Successful!</Text>
+        <Text style={[styles.successMessage, { color: colors.textMuted }]}>
+          You have successfully registered for {event?.name}. You can view your registration details in the "My Registrations" tab.
+        </Text>
+        <Button
+          title="Back to Home"
+          onPress={() => router.replace('/(tabs)')}
+          style={styles.backButton}
+        />
       </View>
     );
   }
@@ -199,7 +249,7 @@ export default function EventDetailsScreen() {
           </View>
 
           {!isTablet && (
-            <View style={styles.statsGrid}>
+            <View style={[styles.statsGrid, { gap: 12 }]}>
               <View style={styles.gridItem}>
                 <View style={styles.gridIconHeader}>
                   <MapPin size={20} color={colors.primary} />
@@ -259,6 +309,11 @@ export default function EventDetailsScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { backgroundColor: colors.background, paddingHorizontal: isTablet ? 60 : 20, paddingBottom: Platform.OS === "ios" ? 40 : 20 }]}>
+        {registrationError && (
+          <Text style={[styles.errorMessage, { color: colors.error, marginBottom: 12 }]}>
+            {registrationError}
+          </Text>
+        )}
         {isRegistered && isEventCompleted ? (
           <Button title="Download Certificate" onPress={handleDownloadCertificate} style={{ ...styles.registerButton, backgroundColor: "#10b981", height: isTablet ? 64 : 56 }} icon={<Award size={20} color="#fff" />} />
         ) : isRegistered ? (
@@ -266,7 +321,13 @@ export default function EventDetailsScreen() {
         ) : isDeadlinePassed ? (
           <Button title="Registration Closed" disabled={true} onPress={() => { }} style={{ ...styles.registerButton, opacity: 0.7, height: isTablet ? 64 : 56 }} />
         ) : (
-          <Button title="Register Now" disabled={!canRegister} onPress={() => router.push(`/register/${event.id}`)} style={{ ...styles.registerButton, height: isTablet ? 64 : 56 }} />
+          <Button 
+            title="Register Now" 
+            disabled={!canRegister || isRegistering} 
+            onPress={handleRegisterClick} 
+            loading={isRegistering}
+            style={{ ...styles.registerButton, height: isTablet ? 64 : 56 }} 
+          />
         )}
       </View>
     </View>
@@ -424,6 +485,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  successIcon: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+  successMessage: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 32,
+  },
+  backButton: {
+    marginTop: 20,
+  },
+  errorMessage: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
   },
   footer: {
     position: "absolute",

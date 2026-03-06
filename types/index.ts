@@ -100,3 +100,14 @@ export interface Notification {
     isRead: boolean;
 }
 
+
+export interface Feedback {
+    id: string;
+    event_id: string;
+    student_name: string;
+    student_email: string;
+    roll_no: string;
+    rating: number;
+    comment: string;
+    created_at?: string;
+}

@@ -44,6 +44,14 @@ export default function HomeScreen() {
   const [showScanner, setShowScanner] = useState(false);
   const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // 30 seconds
+    return () => clearInterval(timer);
+  }, []);
 
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
@@ -199,6 +207,24 @@ export default function HomeScreen() {
     }
   };
 
+  // Quick Stats Calculation
+  const activeCount = events.filter((e) => {
+    const isDeadlinePassed = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
+    return e.status === "Open" && !isDeadlinePassed;
+  }).length;
+
+  const currentRegistrations = myRegistrations.filter((r) => {
+    if (!r.event || r.status === "CANCELLED") return false;
+    const isPastDeadline = r.event.deadline ? new Date(r.event.deadline).getTime() <= now.getTime() : false;
+    return !isPastDeadline;
+  }).length;
+
+  const finishedRegistrations = myRegistrations.filter((r) => {
+    if (!r.event || r.status === "CANCELLED") return false;
+    const isPastDeadline = r.event.deadline ? new Date(r.event.deadline).getTime() <= now.getTime() : false;
+    return isPastDeadline;
+  }).length;
+
   const popularEvents = [...events]
     .sort((a, b) => (b.registeredCount || 0) - (a.registeredCount || 0))
     .slice(0, 3);
@@ -349,31 +375,17 @@ export default function HomeScreen() {
         {/* Quick Stats Row */}
         <Animated.View style={[styles.statsRow, { opacity: fadeAnim }]}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
-              {events.filter((e) => e.status === "Open").length}
-            </Text>
+            <Text style={styles.statValue}>{activeCount}</Text>
             <Text style={styles.statLabel}>Active</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
-              {
-                myRegistrations.filter(
-                  (r) => r.event && new Date(r.event.date) >= new Date(),
-                ).length
-              }
-            </Text>
+            <Text style={styles.statValue}>{currentRegistrations}</Text>
             <Text style={styles.statLabel}>Registered</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
-              {
-                myRegistrations.filter(
-                  (r) => r.event && new Date(r.event.date) < new Date(),
-                ).length
-              }
-            </Text>
+            <Text style={styles.statValue}>{finishedRegistrations}</Text>
             <Text style={styles.statLabel}>Completed</Text>
           </View>
         </Animated.View>

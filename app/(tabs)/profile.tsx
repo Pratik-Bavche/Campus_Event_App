@@ -104,13 +104,26 @@ export default function ProfileScreen() {
   const theme = useColorScheme() ?? "light";
   const colors = Colors[theme];
 
+  const [now, setNow] = useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // 30 seconds
+    return () => clearInterval(timer);
+  }, []);
+
   // Stats calculation
   const registeredCount =
     myRegistrations?.filter((r) => r.status !== "CANCELLED").length || 0;
+
   const completedCount =
-    myRegistrations?.filter(
-      (r) => r.event && new Date(r.event.date) <= new Date() && r.status !== "CANCELLED",
-    ).length || 0;
+    myRegistrations?.filter((r) => {
+      if (!r.event || r.status === "CANCELLED") return false;
+      const deadline = r.event.deadline || r.event.date;
+      return new Date(deadline).getTime() <= now.getTime();
+    }).length || 0;
+
   const cancelledCount =
     myRegistrations?.filter((r) => r.status === "CANCELLED").length || 0;
 
