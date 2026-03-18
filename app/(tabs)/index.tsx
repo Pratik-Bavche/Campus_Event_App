@@ -90,13 +90,25 @@ export default function HomeScreen() {
     ]).start();
   }, []);
 
+  const activeAnnouncements = announcements.filter(a => {
+    if (a.eventId) {
+      const associatedEvent = events.find(e => String(e.id) === String(a.eventId));
+      if (associatedEvent) {
+        const isPastDeadline = associatedEvent.deadline ? new Date(associatedEvent.deadline).getTime() <= now.getTime() : false;
+        return !isPastDeadline;
+      }
+      return false; // Remove if event is missing
+    }
+    return true;
+  });
+
   // Auto-scroll announcements
   useEffect(() => {
-    if (announcements.length <= 1) return;
+    if (activeAnnouncements.length <= 1) return;
 
     const interval = setInterval(() => {
       setCurrentAnnouncementIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % announcements.length;
+        const nextIndex = (prevIndex + 1) % activeAnnouncements.length;
         announcementScrollRef.current?.scrollToIndex({
           index: nextIndex,
           animated: true,
@@ -106,10 +118,13 @@ export default function HomeScreen() {
     }, 5000); // Change announcement every 5 seconds
 
     return () => clearInterval(interval);
-  }, [announcements.length]);
+  }, [activeAnnouncements.length]);
 
   useEffect(() => {
-    let filtered = [...events];
+    let filtered = events.filter(e => {
+      const isPastDeadline = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
+      return !isPastDeadline;
+    });
 
     if (selectedCategory !== "All") {
       filtered = filtered.filter((e) => {
@@ -225,7 +240,11 @@ export default function HomeScreen() {
     return isPastDeadline;
   }).length;
 
-  const popularEvents = [...events]
+  const popularEvents = events
+    .filter(e => {
+      const isPastDeadline = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
+      return !isPastDeadline;
+    })
     .sort((a, b) => (b.registeredCount || 0) - (a.registeredCount || 0))
     .slice(0, 3);
   const categories = [
@@ -424,7 +443,7 @@ export default function HomeScreen() {
 
       <View style={[styles.content, { backgroundColor: colors.background }]}>
         {/* Auto-scrolling Announcements Carousel */}
-        {announcements.length > 0 && (
+        {activeAnnouncements.length > 0 && (
           <>
             <View
               style={{ paddingHorizontal: 20, marginBottom: 12, marginTop: 12 }}
@@ -436,7 +455,7 @@ export default function HomeScreen() {
             <View style={styles.announcementCarouselContainer}>
               <FlatList
                 ref={announcementScrollRef}
-                data={announcements}
+                data={activeAnnouncements}
                 renderItem={({ item }) => (
                   <View
                     style={[
@@ -503,14 +522,14 @@ export default function HomeScreen() {
                     contentOffsetX / (width - 60),
                   );
                   setCurrentAnnouncementIndex(
-                    Math.min(currentIndex, announcements.length - 1),
+                    Math.min(currentIndex, activeAnnouncements.length - 1),
                   );
                 }}
               />
             </View>
             {/* Indicator Dots */}
             <View style={styles.indicatorContainer}>
-              {announcements.map((_, index) => (
+              {activeAnnouncements.map((_, index) => (
                 <View
                   key={index}
                   style={[
@@ -602,15 +621,7 @@ export default function HomeScreen() {
                     {event.name}
                   </Text>
                   <Text style={[styles.deadlineDate, { color: colors.error }]}>
-                    {Math.max(
-                      0,
-                      Math.ceil(
-                        (new Date(event.deadline).getTime() -
-                          new Date().getTime()) /
-                        (1000 * 60 * 60 * 24),
-                      ),
-                    )}{" "}
-                    days left
+                    Event Open
                   </Text>
                 </View>
                 <ChevronRight size={20} color={colors.textMuted} />

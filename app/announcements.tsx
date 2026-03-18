@@ -20,12 +20,29 @@ export default function AnnouncementsScreen() {
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
   const colors = Colors[theme];
-  const { announcements, fetchAnnouncements, isAnnouncementsLoading } =
+  const { announcements, fetchAnnouncements, isAnnouncementsLoading, events } =
     useDataStore();
+  const [now, setNow] = React.useState(new Date());
 
   useEffect(() => {
     fetchAnnouncements();
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // 30 seconds
+    return () => clearInterval(timer);
   }, []);
+
+  const activeAnnouncements = announcements.filter(a => {
+    if (a.eventId) {
+      const associatedEvent = events.find(e => String(e.id) === String(a.eventId));
+      if (associatedEvent) {
+        const isPastDeadline = associatedEvent.deadline ? new Date(associatedEvent.deadline).getTime() <= now.getTime() : false;
+        return !isPastDeadline;
+      }
+      return false; // Remove if event is missing
+    }
+    return true;
+  });
 
   const renderAnnouncement = ({ item }: { item: any }) => (
     <View
@@ -124,7 +141,7 @@ export default function AnnouncementsScreen() {
         </Text>
       </View>
 
-      {announcements && announcements.length > 0 ? (
+      {activeAnnouncements && activeAnnouncements.length > 0 ? (
         <>
           <View
             style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 12 }}
@@ -135,7 +152,7 @@ export default function AnnouncementsScreen() {
           </View>
           <View style={styles.sliderContainer}>
             <FlatList
-              data={announcements}
+              data={activeAnnouncements}
               renderItem={renderAnnouncement}
               keyExtractor={(item) => item.id}
               horizontal

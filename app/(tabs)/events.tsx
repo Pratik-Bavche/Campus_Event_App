@@ -53,7 +53,7 @@ export default function EventsScreen() {
   }, [q]);
 
   const categories = ["All Events", "Technical", "Cultural", "Sports"];
-  const statuses = ["All", "Open", "Closed", "Completed"];
+  const statuses = ["All", "Open", "Closed"];
 
   useEffect(() => {
     let filtered = events.filter(
@@ -70,15 +70,13 @@ export default function EventsScreen() {
       );
     }
 
-    if (selectedStatus !== "All") {
-      filtered = filtered.filter((e) => {
-        const isDeadlinePassed = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
-        if (selectedStatus === "Completed") return isDeadlinePassed;
-        if (selectedStatus === "Open") return e.status === "Open" && !isDeadlinePassed;
-        if (selectedStatus === "Closed") return e.status === "Closed" || isDeadlinePassed;
-        return e.status === selectedStatus;
-      });
-    }
+    filtered = filtered.filter((e) => {
+      const isDeadlinePassed = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
+      if (selectedStatus === "All") return !isDeadlinePassed && e.status !== "Closed";
+      if (selectedStatus === "Open") return e.status === "Open" && !isDeadlinePassed;
+      if (selectedStatus === "Closed") return e.status === "Closed" || isDeadlinePassed;
+      return true;
+    });
 
     setFilteredEvents(filtered);
   }, [searchQuery, events, selectedCategory, selectedStatus, now]);

@@ -61,10 +61,10 @@ export default function RegistrationsScreen() {
   const tabs = ["All", "Completed", "Cancelled"];
 
   const filteredRegistrations = myRegistrations.filter((reg: Registration) => {
-    if (selectedTab === "All") return reg.status !== "CANCELLED";
-
     const deadlineStr = reg.event?.deadline;
     const isPastDeadline = deadlineStr ? new Date(deadlineStr).getTime() <= now.getTime() : false;
+
+    if (selectedTab === "All") return reg.status !== "CANCELLED" && !isPastDeadline;
 
     if (selectedTab === "Completed") {
       return reg.event && isPastDeadline && reg.status !== "CANCELLED";
