@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { announcementService, eventService, feedbackService, notificationService, registrationService } from '../services/api';
-import { Announcement, Event, Feedback, Notification, Registration } from '../types';
+import { announcementService, certificateService, eventService, feedbackService, notificationService, registrationService } from '../services/api';
+import { Announcement, Certificate, Event, Feedback, Notification, Registration } from '../types';
 
 interface DataState {
     events: Event[];
     myRegistrations: Registration[];
     myFeedbacks: Feedback[];
+    myCertificates: Certificate[];
     notifications: Notification[];
     announcements: Announcement[];
     isEventsLoading: boolean;
@@ -13,11 +14,13 @@ interface DataState {
     isNotificationsLoading: boolean;
     isAnnouncementsLoading: boolean;
     isFeedbacksLoading: boolean;
+    isCertificatesLoading: boolean;
     fetchEvents: () => Promise<void>;
     fetchRegistrations: () => Promise<void>;
     fetchNotifications: () => Promise<void>;
     fetchAnnouncements: () => Promise<void>;
     fetchFeedbacks: () => Promise<void>;
+    fetchCertificates: (rollNo: string) => Promise<void>;
     submitFeedback: (feedback: Omit<Feedback, 'id' | 'created_at'>) => Promise<void>;
     cancelRegistration: (id: string) => Promise<void>;
     addRegistration: (reg: Registration) => void;
@@ -29,6 +32,7 @@ export const useDataStore = create<DataState>((set, get) => ({
     events: [],
     myRegistrations: [],
     myFeedbacks: [],
+    myCertificates: [],
     notifications: [],
     announcements: [],
     isEventsLoading: false,
@@ -36,6 +40,7 @@ export const useDataStore = create<DataState>((set, get) => ({
     isNotificationsLoading: false,
     isAnnouncementsLoading: false,
     isFeedbacksLoading: false,
+    isCertificatesLoading: false,
 
     fetchEvents: async () => {
         set({ isEventsLoading: true });
@@ -45,7 +50,6 @@ export const useDataStore = create<DataState>((set, get) => ({
         } catch (error: any) {
             set({ isEventsLoading: false });
             const message = error?.message || '';
-            // Using console.log instead of warn/error for these to avoid dev-mode popups while notifying logs
             if (message.includes('525') || message.includes('Connection error')) {
                 console.log('Handled gracefuly:', message);
             } else {
@@ -110,6 +114,17 @@ export const useDataStore = create<DataState>((set, get) => ({
         } catch (error) {
             set({ isFeedbacksLoading: false });
             console.warn('Fetch feedbacks error', error);
+        }
+    },
+
+    fetchCertificates: async (rollNo: string) => {
+        set({ isCertificatesLoading: true });
+        try {
+            const certificates = await certificateService.getMyCertificates(rollNo);
+            set({ myCertificates: certificates, isCertificatesLoading: false });
+        } catch (error) {
+            set({ isCertificatesLoading: false });
+            console.warn('Fetch certificates error', error);
         }
     },
 

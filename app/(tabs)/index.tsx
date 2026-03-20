@@ -95,7 +95,7 @@ export default function HomeScreen() {
       const associatedEvent = events.find(e => String(e.id) === String(a.eventId));
       if (associatedEvent) {
         const isPastDeadline = associatedEvent.deadline ? new Date(associatedEvent.deadline).getTime() <= now.getTime() : false;
-        return !isPastDeadline;
+        return !isPastDeadline && associatedEvent.status === "Open";
       }
       return false; // Remove if event is missing
     }
@@ -123,7 +123,7 @@ export default function HomeScreen() {
   useEffect(() => {
     let filtered = events.filter(e => {
       const isPastDeadline = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
-      return !isPastDeadline;
+      return !isPastDeadline && e.status === "Open";
     });
 
     if (selectedCategory !== "All") {
@@ -243,7 +243,7 @@ export default function HomeScreen() {
   const popularEvents = events
     .filter(e => {
       const isPastDeadline = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
-      return !isPastDeadline;
+      return !isPastDeadline && e.status === "Open";
     })
     .sort((a, b) => (b.registeredCount || 0) - (a.registeredCount || 0))
     .slice(0, 3);

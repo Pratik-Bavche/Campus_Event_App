@@ -15,6 +15,7 @@ import {
   useColorScheme,
   useWindowDimensions,
   View,
+  Linking,
 } from "react-native";
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
@@ -22,7 +23,7 @@ import { Colors } from "../../constants/theme";
 import { profileService } from "../../services/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useDataStore } from "../../store/useDataStore";
-import { User } from "../../types";
+import { Certificate, User } from "../../types";
 
 const { width } = Dimensions.get("window");
 
@@ -99,7 +100,7 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
   const { user, logout, updateUser } = useAuthStore();
-  const { myRegistrations } = useDataStore();
+  const { myRegistrations, myCertificates, fetchCertificates, isCertificatesLoading } = useDataStore();
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
   const colors = Colors[theme];
@@ -110,8 +111,13 @@ export default function ProfileScreen() {
     const timer = setInterval(() => {
       setNow(new Date());
     }, 30000); // 30 seconds
+
+    if (user?.roll_number) {
+      fetchCertificates(user.roll_number);
+    }
+
     return () => clearInterval(timer);
-  }, []);
+  }, [user?.roll_number]);
 
   // Stats calculation
   const registeredCount =
@@ -147,6 +153,8 @@ export default function ProfileScreen() {
       value: "Artificial Intelligence and Data Science",
     },
   ];
+
+  const [isCertsExpanded, setIsCertsExpanded] = useState(false);
 
   // Editing State
   const [isEditing, setIsEditing] = useState(false);
@@ -500,20 +508,69 @@ export default function ProfileScreen() {
                   <Text style={[styles.certificateTitle, { color: colors.text, fontSize: isTablet ? 20 : 17 }]}>
                     Certificates
                   </Text>
-                  <Text
-                    style={[styles.certificateCount, { color: colors.primary, fontSize: isTablet ? 24 : 20 }]}
-                  >
-                    0
-                  </Text>
+                  <View style={[styles.countBadge, { backgroundColor: colors.primary + '15' }]}>
+                    <Text
+                      style={[styles.certificateCount, { color: colors.primary, fontSize: isTablet ? 18 : 16 }]}
+                    >
+                      {myCertificates.length}
+                    </Text>
+                  </View>
                 </View>
+                
                 <Text
                   style={[
                     styles.certificateDescription,
-                    { color: colors.textMuted },
+                    { color: colors.textMuted, marginBottom: 16 },
                   ]}
                 >
-                  Earned certificates from completed events will appear here
+                  Your earned certificates for completed events. Click the button below to view them.
                 </Text>
+
+                <Button 
+                  title={isCertsExpanded ? "Hide Certificates" : "View Certificates"}
+                  onPress={() => setIsCertsExpanded(!isCertsExpanded)}
+                  variant="primary"
+                  style={styles.viewCertsButton}
+                />
+                
+                {isCertsExpanded && (
+                  <View style={{ marginTop: 20 }}>
+                    {myCertificates.length > 0 ? (
+                      myCertificates.map((cert) => (
+                        <Pressable
+                          key={cert.id}
+                          style={({ pressed }) => [
+                            styles.certificateItem,
+                            { 
+                              backgroundColor: theme === 'light' ? '#f8fafc' : '#1e293b',
+                              opacity: pressed ? 0.7 : 1,
+                              transform: [{ scale: pressed ? 0.98 : 1 }]
+                            }
+                          ]}
+                          onPress={() => Linking.openURL(cert.certificate_url)}
+                        >
+                          <View style={styles.certIconContainer}>
+                            <Image 
+                              source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2912/2912761.png' }} 
+                              style={styles.certIcon}
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.certEventTitle, { color: colors.text }]}>{cert.event_title}</Text>
+                            <Text style={[styles.certDate, { color: colors.textMuted }]}>
+                              {cert.issued_at ? new Date(cert.issued_at).toLocaleDateString() : 'Issued'}
+                            </Text>
+                          </View>
+                          <Text style={{ color: colors.primary, fontWeight: '600' }}>View</Text>
+                        </Pressable>
+                      ))
+                    ) : (
+                      <Text style={{ color: colors.textMuted, textAlign: 'center', padding: 10 }}>
+                        No certificates available yet.
+                      </Text>
+                    )}
+                  </View>
+                )}
               </View>
 
 
@@ -790,5 +847,45 @@ const styles = StyleSheet.create({
   certificateDescription: {
     fontSize: 14,
     lineHeight: 22,
+  },
+  certificateItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    gap: 12,
+  },
+  certIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  certIcon: {
+    width: 24,
+    height: 24,
+  },
+  certEventTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  certDate: {
+    fontSize: 12,
+  },
+  countBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  viewCertsButton: {
+    borderRadius: 12,
+    marginTop: 8,
   },
 });

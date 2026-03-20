@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Config } from '../constants/Config';
-import { Announcement, Attendance, Event, Feedback, Notification, Registration, User } from '../types';
+import { Announcement, Attendance, Certificate, Event, Feedback, Notification, Registration, User } from '../types';
 import { supabase } from './supabase';
 
 // In a real app, this would be your base URL from env
@@ -714,6 +714,27 @@ export const feedbackService = {
             return data as Feedback[];
         } catch (error) {
             console.warn('getMyFeedbacks failed', error);
+            return [];
+        }
+    }
+};
+
+export const certificateService = {
+    getMyCertificates: async (rollNo: string): Promise<Certificate[]> => {
+        try {
+            const { data, error } = await supabase
+                .from('certificates')
+                .select('*')
+                .eq('roll_no', rollNo);
+
+            if (error) {
+                console.warn('Error fetching certificates:', error.message);
+                return [];
+            }
+
+            return data as Certificate[];
+        } catch (error) {
+            console.warn('getMyCertificates failed', error);
             return [];
         }
     }

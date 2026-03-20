@@ -111,3 +111,14 @@ export interface Feedback {
     comment: string;
     created_at?: string;
 }
+
+export interface Certificate {
+    id: string;
+    event_id: string;
+    roll_no: string;
+    student_name: string;
+    event_title: string;
+    certificate_url: string;
+    issuer_club_id?: string;
+    issued_at?: string;
+}
