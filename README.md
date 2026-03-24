@@ -140,4 +140,4 @@ Contributions are welcome! Whether it's adding a new feature, fixing a bug, or i
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-*Developed with ❤️ by the Campus Event Team*
+*Developed by Pratiik*
