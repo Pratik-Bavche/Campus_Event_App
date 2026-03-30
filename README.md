@@ -9,7 +9,7 @@
 **Campus Event App** is a state-of-the-art, production-ready mobile ecosystem designed to bridge the gap between college event organizers and students. Built with a "Mobile-First" philosophy, it streamlines event discovery, registration, and attendance management using modern cloud infrastructure.
 
 ---
-
+ 
 ## 🚀 Vision & Problem Solving
 
 ### The Real-World Problem
