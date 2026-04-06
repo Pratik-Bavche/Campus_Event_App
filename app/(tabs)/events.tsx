@@ -19,6 +19,7 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Colors } from "../../constants/theme";
 import { useDataStore } from "../../store/useDataStore";
+import { formatDate, formatTime12h } from "../../utils/dateFormatter";
 
 export default function EventsScreen() {
   const { width } = useWindowDimensions();
@@ -141,20 +142,13 @@ export default function EventsScreen() {
               <View style={styles.detailItem}>
                 <Calendar size={14} color={colors.textMuted} />
                 <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                  {new Date(item.date).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {formatDate(item.date, { month: 'short', day: 'numeric' })}
                 </Text>
               </View>
               <View style={styles.detailItem}>
                 <Clock size={14} color={colors.textMuted} />
                 <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                  {new Date(item.date).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
+                  {formatTime12h(item.date)}
                 </Text>
               </View>
               <View style={styles.detailItem}>

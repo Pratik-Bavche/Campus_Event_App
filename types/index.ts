@@ -35,6 +35,7 @@ export interface Event {
     rules: string;
     venue: string;
     date: string; // ISO string
+    endDate?: string; // ISO string
     deadline: string; // ISO string
     poster: string;
     isClosed: boolean;

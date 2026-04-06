@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Colors } from "../constants/theme";
 import { useDataStore } from "../store/useDataStore";
+import { formatDate } from "../utils/dateFormatter";
 
 const { width } = Dimensions.get("window");
 
@@ -79,7 +80,7 @@ export default function AnnouncementsScreen() {
             {item.title}
           </Text>
           <Text style={{ fontSize: 12, color: colors.textMuted }}>
-            {new Date(item.date).toLocaleDateString()}
+            {formatDate(item.date)}
           </Text>
         </View>
         <Text style={[styles.announcementBody, { color: colors.textMuted }]}>

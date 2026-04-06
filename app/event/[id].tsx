@@ -31,6 +31,7 @@ import { eventService } from "../../services/api";
 import { shareService } from "../../services/shareService";
 import { useDataStore } from "../../store/useDataStore";
 import { Event } from "../../types";
+import { formatDate, formatTime12h } from "../../utils/dateFormatter";
 
 export default function EventDetailsScreen() {
   const { width } = useWindowDimensions();
@@ -212,7 +213,7 @@ export default function EventDetailsScreen() {
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>Date</Text>
               </View>
               <Text style={[styles.statValue, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}>
-                {new Date(event.date).toLocaleDateString()}
+                {formatDate(event.date)}
               </Text>
             </View>
             <View style={styles.gridItem}>
@@ -221,7 +222,7 @@ export default function EventDetailsScreen() {
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>Time</Text>
               </View>
               <Text style={[styles.statValue, { color: colors.text, fontSize: isTablet ? 18 : 16 }]}>
-                {new Date(event.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true })}
+                {formatTime12h(event.date)}
               </Text>
             </View>
             {isTablet && (
@@ -301,7 +302,7 @@ export default function EventDetailsScreen() {
           <View style={styles.deadlineInfo}>
             <Info size={16} color={isDeadlinePassed ? colors.error : colors.accent} />
             <Text style={[styles.deadlineText, { color: isDeadlinePassed ? colors.error : colors.accent }]}>
-              {isDeadlinePassed ? "Registration closed" : `Register before ${new Date(event.deadline).toLocaleDateString()}`}
+              {isDeadlinePassed ? "Registration closed" : `Register before ${formatDate(event.deadline)}`}
             </Text>
           </View>
         </View>

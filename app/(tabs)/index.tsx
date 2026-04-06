@@ -2,7 +2,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { CheckCircle2, ChevronRight, Megaphone, QrCode, Scan, X } from "lucide-react-native";
+import { Calendar, CheckCircle2, ChevronRight, Clock, Megaphone, QrCode, Scan, X } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -25,6 +25,7 @@ import { Colors } from "../../constants/theme";
 import { attendanceService } from "../../services/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useDataStore } from "../../store/useDataStore";
+import { formatDate, formatTime12h } from "../../utils/dateFormatter";
 
 const { width } = Dimensions.get("window");
 
@@ -35,6 +36,7 @@ export default function HomeScreen() {
     myRegistrations,
     announcements,
     fetchEvents,
+    fetchRegistrations,
     fetchAnnouncements,
     isEventsLoading,
   } = useDataStore();
@@ -42,6 +44,8 @@ export default function HomeScreen() {
   const [filteredEvents, setFilteredEvents] = React.useState(events);
   const [currentAnnouncementIndex, setCurrentAnnouncementIndex] = useState(0);
   const [showScanner, setShowScanner] = useState(false);
+  const [showEventPicker, setShowEventPicker] = useState(false);
+  const [selectedEventForAttendance, setSelectedEventForAttendance] = useState<any>(null);
   const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [now, setNow] = useState(new Date());
@@ -64,6 +68,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchEvents();
+    fetchRegistrations();
     fetchAnnouncements();
 
     // Header Animations
@@ -167,6 +172,10 @@ export default function HomeScreen() {
       return;
     }
 
+    setShowEventPicker(true);
+  };
+
+  const startScanner = async (event: any) => {
     if (!permission) {
       const { status } = await requestPermission();
       if (status !== 'granted') {
@@ -180,6 +189,9 @@ export default function HomeScreen() {
         return;
       }
     }
+    
+    setSelectedEventForAttendance(event);
+    setShowEventPicker(false);
     setShowScanner(true);
   };
 
@@ -189,10 +201,16 @@ export default function HomeScreen() {
     try {
       // Validate that the scanned data contains a UUID (or is a UUID itself)
       const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
-      const isValidQR = uuidRegex.test(data);
+      const match = data.match(uuidRegex);
+      const scannedId = match ? match[0] : null;
 
-      if (!isValidQR) {
+      if (!scannedId) {
         throw new Error('Invalid QR Code. Please scan the correct event attendance QR.');
+      }
+
+      // Verify if scanned ID matches the selected event
+      if (selectedEventForAttendance && scannedId.toLowerCase() !== selectedEventForAttendance.id.toLowerCase()) {
+        throw new Error(`This QR code is for a different event. Please scan the QR for "${selectedEventForAttendance.name}".`);
       }
 
       await attendanceService.markAttendance(data, 'QR');
@@ -203,8 +221,6 @@ export default function HomeScreen() {
         { text: 'OK' }
       ]);
     } catch (error: any) {
-      // We don't use console.error here to avoid triggering the Expo developer error overlay
-      // during expected failure cases (like invalid QR codes)
       console.log('Attendance scan handled:', error.message);
 
       let errorMsg = 'Failed to record attendance. Please try again.';
@@ -341,6 +357,96 @@ export default function HomeScreen() {
             )}
           </Pressable>
         </View>
+
+        {/* Event Selection Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={showEventPicker}
+          onRequestClose={() => setShowEventPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.eventPickerContainer, { backgroundColor: colors.card }]}>
+              <View style={styles.eventPickerHeader}>
+                <Text style={[styles.eventPickerTitle, { color: colors.text }]}>Select Event</Text>
+                <Pressable onPress={() => setShowEventPicker(false)}>
+                  <X size={24} color={colors.textMuted} />
+                </Pressable>
+              </View>
+
+              <Text style={[styles.eventPickerSubtitle, { color: colors.textMuted }]}>
+                Only ongoing events you've registered for are eligible for attendance.
+              </Text>
+
+              <ScrollView style={styles.eventList} showsVerticalScrollIndicator={false}>
+                {myRegistrations.filter(r => r.status !== 'CANCELLED' && r.event).map((reg) => {
+                  const event = reg.event!;
+                  const eventDate = new Date(event.date);
+                  const hasStarted = now.getTime() >= eventDate.getTime();
+                  
+                  // For "Ongoing", we check if it started and hasn't ended (if end date exists)
+                  // or if it started today.
+                  const isOngoing = hasStarted; 
+
+                  return (
+                    <Pressable
+                      key={reg.id}
+                      style={({ pressed }) => [
+                        styles.eventItem,
+                        { 
+                          backgroundColor: theme === 'light' ? '#f8fafc' : '#1e293b',
+                          opacity: pressed ? 0.7 : 1,
+                          borderLeftColor: hasStarted ? colors.success : colors.border,
+                          borderLeftWidth: 4,
+                        }
+                      ]}
+                      onPress={() => {
+                        if (hasStarted) {
+                          startScanner(event);
+                        } else {
+                          Alert.alert("Event Not Started", "This event has not started yet. You can mark attendance once it begins.");
+                        }
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.eventItemName, { color: colors.text }]}>{event.name}</Text>
+                        <View style={styles.eventItemMeta}>
+                          <Calendar size={14} color={colors.textMuted} />
+                          <Text style={[styles.eventItemDate, { color: colors.textMuted }]}>
+                            {formatDate(eventDate)}
+                          </Text>
+                          <View style={{ width: 10 }} />
+                          <Clock size={14} color={colors.textMuted} />
+                          <Text style={[styles.eventItemDate, { color: colors.textMuted }]}>
+                            {formatTime12h(eventDate)}
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      {hasStarted ? (
+                        <View style={[styles.statusBadge, { backgroundColor: colors.success + '15' }]}>
+                          <Text style={[styles.statusBadgeText, { color: colors.success }]}>Ongoing</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.statusBadge, { backgroundColor: colors.border + '30' }]}>
+                          <Text style={[styles.statusBadgeText, { color: colors.textMuted }]}>Upcoming</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+                
+                {myRegistrations.filter(r => r.status !== 'CANCELLED' && r.event).length === 0 && (
+                  <View style={styles.emptyState}>
+                    <Text style={{ color: colors.textMuted, textAlign: 'center' }}>
+                      You haven't registered for any active events yet.
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
 
         {/* Attendance Scanner Modal */}
         <Modal
@@ -504,7 +610,7 @@ export default function HomeScreen() {
                           marginTop: 6,
                         }}
                       >
-                        {new Date(item.date).toLocaleDateString()}
+                        {formatDate(item.date)}
                       </Text>
                     </View>
                   </View>
@@ -973,5 +1079,75 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     borderRadius: 20,
     backgroundColor: 'transparent',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  eventPickerContainer: {
+    width: '100%',
+    maxHeight: '80%',
+    borderRadius: 24,
+    padding: 24,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  eventPickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  eventPickerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  eventPickerSubtitle: {
+    fontSize: 14,
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  eventList: {
+    maxHeight: 400,
+  },
+  eventItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+  },
+  eventItemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  eventItemMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  eventItemDate: {
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    marginLeft: 12,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
   },
 });

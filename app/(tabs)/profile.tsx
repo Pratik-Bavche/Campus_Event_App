@@ -24,6 +24,7 @@ import { profileService } from "../../services/api";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useDataStore } from "../../store/useDataStore";
 import { Certificate, User } from "../../types";
+import { formatDate } from "../../utils/dateFormatter";
 
 const { width } = Dimensions.get("window");
 
@@ -558,7 +559,7 @@ export default function ProfileScreen() {
                           <View style={{ flex: 1 }}>
                             <Text style={[styles.certEventTitle, { color: colors.text }]}>{cert.event_title}</Text>
                             <Text style={[styles.certDate, { color: colors.textMuted }]}>
-                              {cert.issued_at ? new Date(cert.issued_at).toLocaleDateString() : 'Issued'}
+                              {cert.issued_at ? formatDate(cert.issued_at) : 'Issued'}
                             </Text>
                           </View>
                           <Text style={{ color: colors.primary, fontWeight: '600' }}>View</Text>
