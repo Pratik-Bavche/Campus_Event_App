@@ -1,7 +1,7 @@
 # 🎓 Campus Event App
 
 [![React Native](https://img.shields.io/badge/React_Native-0.81.5-61DAFB?logo=react&logoColor=black)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54.0.33-000020?logo=expo&logoColor=white)](https://expo.dev/)
+[![Expo](https://img.shields.io/badge/Expo-54.0.33-000020?logo=expo&logoColor=white)](https://expo.dev/) 
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![Zustand](https://img.shields.io/badge/State-Zustand-443E38)](https://github.com/pmndrs/zustand)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -9,7 +9,7 @@
 **Campus Event App** is a state-of-the-art, production-ready mobile ecosystem designed to bridge the gap between college event organizers and students. Built with a "Mobile-First" philosophy, it streamlines event discovery, registration, and attendance management using modern cloud infrastructure.
 
 ---
-
+ 
 ## 🚀 Vision & Problem Solving
 
 ### The Real-World Problem
@@ -140,4 +140,4 @@ Contributions are welcome! Whether it's adding a new feature, fixing a bug, or i
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-*Developed with ❤️ by the Campus Event Team*
+*Developed by Pratiik*
