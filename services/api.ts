@@ -132,6 +132,26 @@ export const authService = {
             return handleApiError(error, 'authService.register');
         }
     },
+    forgotPassword: async (email: string): Promise<void> => {
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: 'collegeevents://reset-password',
+            });
+            if (error) throw error;
+        } catch (error) {
+            return handleApiError(error, 'authService.forgotPassword');
+        }
+    },
+    resetPassword: async (password: string): Promise<void> => {
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password: password
+            });
+            if (error) throw error;
+        } catch (error) {
+            return handleApiError(error, 'authService.resetPassword');
+        }
+    },
 };
 
 /**

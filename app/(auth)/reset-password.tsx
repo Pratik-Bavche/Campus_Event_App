@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Mail, Send } from 'lucide-react-native';
+import { Lock, Save, ShieldCheck } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
     Alert,
@@ -19,21 +19,31 @@ import { Input } from '../../components/ui/Input';
 import { Colors } from '../../constants/theme';
 import { authService } from '../../services/api';
 
-export default function ForgotPasswordScreen() {
+export default function ResetPasswordScreen() {
     const { width, height } = useWindowDimensions();
     const isTablet = width >= 768;
-    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [isSuccess, setIsSuccess] = useState(false);
 
     const router = useRouter();
     const theme = useColorScheme() ?? 'light';
     const colors = Colors[theme];
 
-    const handleSendResetLink = async () => {
-        if (!email) {
-            setError('Please enter your registered email');
+    const handleResetPassword = async () => {
+        if (!password || !confirmPassword) {
+            setError('Please fill in both fields');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
             return;
         }
 
@@ -41,17 +51,16 @@ export default function ForgotPasswordScreen() {
         setError('');
 
         try {
-            await authService.forgotPassword(email);
+            await authService.resetPassword(password);
 
-            setIsSuccess(true);
             Alert.alert(
-                'Link Sent',
-                'If an account exists with this email, you will receive a password reset link shortly.',
-                [{ text: 'OK', onPress: () => router.back() }]
+                'Success',
+                'Your password has been reset successfully. You can now login with your new password.',
+                [{ text: 'Login', onPress: () => router.replace('/login') }]
             );
         } catch (err: any) {
-            console.error('Forgot password error:', err);
-            setError(err.message || 'Failed to send reset link. Please try again.');
+            console.error('Reset password error:', err);
+            setError(err.message || 'Failed to reset password. The link may have expired.');
         } finally {
             setIsLoading(false);
         }
@@ -64,14 +73,11 @@ export default function ForgotPasswordScreen() {
                 style={[styles.headerGradient, { height: isTablet ? height * 0.4 : height * 0.35 }]}
             >
                 <View style={[styles.headerContent, { paddingHorizontal: isTablet ? 60 : 30 }]}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={styles.backButton}
-                    >
-                        <ArrowLeft color="#fff" size={24} />
-                    </TouchableOpacity>
-                    <Text style={[styles.headerTitle, { fontSize: isTablet ? 36 : 28 }]}>Reset Password</Text>
-                    <Text style={[styles.headerSubtitle, { fontSize: isTablet ? 16 : 14 }]}>Enter your email to receive a reset link</Text>
+                    <View style={styles.logoContainer}>
+                        <ShieldCheck color="#fff" size={isTablet ? 60 : 48} />
+                    </View>
+                    <Text style={[styles.headerTitle, { fontSize: isTablet ? 36 : 28 }]}>New Password</Text>
+                    <Text style={[styles.headerSubtitle, { fontSize: isTablet ? 16 : 14 }]}>Secure your account with a new password</Text>
                 </View>
             </LinearGradient>
 
@@ -93,39 +99,41 @@ export default function ForgotPasswordScreen() {
                         isTablet && { width: 500, padding: 48 }
                     ]}>
                         <View style={styles.formHeader}>
-                            <Text style={[styles.formTitle, { color: colors.text, fontSize: isTablet ? 24 : 20 }]}>Forgot Password?</Text>
+                            <Text style={[styles.formTitle, { color: colors.text, fontSize: isTablet ? 24 : 20 }]}>Reset Password</Text>
                             <View style={[styles.titleSeparator, { backgroundColor: colors.primary }]} />
                         </View>
 
-                        <Text style={[styles.instructionText, { color: colors.textMuted }]}>
-                            Don't worry! It happens. Please enter the email address associated with your account.
-                        </Text>
+                        <Input
+                            label="New Password"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                            icon={<Lock size={20} color={colors.textMuted} />}
+                        />
 
                         <Input
-                            label="Registration Email"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            icon={<Mail size={20} color={colors.textMuted} />}
+                            label="Confirm New Password"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry
+                            icon={<Lock size={20} color={colors.textMuted} />}
                         />
 
                         {error ? <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text> : null}
 
                         <Button
-                            title="Send Reset Link"
-                            onPress={handleSendResetLink}
+                            title="Update Password"
+                            onPress={handleResetPassword}
                             loading={isLoading}
                             style={{ ...styles.resetButton, height: isTablet ? 64 : 58 }}
-                            icon={<Send size={20} color="#fff" />}
-                            disabled={isSuccess}
+                            icon={<Save size={20} color="#fff" />}
                         />
 
                         <TouchableOpacity
-                            onPress={() => router.back()}
+                            onPress={() => router.replace('/login')}
                             style={styles.backToLogin}
                         >
-                            <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Back to Login</Text>
+                            <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '600' }}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -149,11 +157,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
     },
-    backButton: {
-        position: 'absolute',
-        top: -20,
-        left: 20,
-        padding: 10,
+    logoContainer: {
+        marginBottom: 16,
+        padding: 12,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.2)',
     },
     headerTitle: {
         fontWeight: 'bold',
@@ -186,12 +194,12 @@ const styles = StyleSheet.create({
                 shadowOffset: { width: 0, height: 10 },
                 shadowOpacity: 0.15,
                 shadowRadius: 20,
-                zIndex: 10,
             }
         }),
+        zIndex: 10,
     },
     formHeader: {
-        marginBottom: 16,
+        marginBottom: 24,
     },
     formTitle: {
         fontWeight: 'bold',
@@ -201,11 +209,6 @@ const styles = StyleSheet.create({
         width: 40,
         height: 4,
         borderRadius: 2,
-    },
-    instructionText: {
-        fontSize: 14,
-        lineHeight: 22,
-        marginBottom: 24,
     },
     resetButton: {
         borderRadius: 18,
