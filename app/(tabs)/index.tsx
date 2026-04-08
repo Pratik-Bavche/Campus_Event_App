@@ -396,14 +396,23 @@ export default function HomeScreen() {
               </Text>
 
               <ScrollView style={styles.eventList} showsVerticalScrollIndicator={false}>
-                {myRegistrations.filter(r => r.status !== 'CANCELLED' && r.event).map((reg) => {
-                  const event = reg.event!;
-                  const eventDate = new Date(event.date);
-                  const hasStarted = now.getTime() >= eventDate.getTime();
+                {myRegistrations.filter(r => {
+                  if (!r.event || r.status === 'CANCELLED') return false;
                   
-                  // For "Ongoing", we check if it started and hasn't ended (if end date exists)
-                  // or if it started today.
-                  const isOngoing = hasStarted; 
+                  // Hide events that have already finished
+                  const endDate = r.event.endDate ? new Date(r.event.endDate) : null;
+                  if (endDate && now.getTime() > endDate.getTime()) return false;
+                  
+                  return true;
+                }).map((reg) => {
+                  const event = reg.event!;
+                  const eventStartDate = new Date(event.date);
+                  const eventEndDate = event.endDate ? new Date(event.endDate) : null;
+                  
+                  const hasStarted = now.getTime() >= eventStartDate.getTime();
+                  const hasEnded = eventEndDate ? now.getTime() > eventEndDate.getTime() : false;
+                  
+                  const isOngoing = hasStarted && !hasEnded; 
 
                   return (
                     <Pressable
@@ -413,15 +422,17 @@ export default function HomeScreen() {
                         { 
                           backgroundColor: theme === 'light' ? '#f8fafc' : '#1e293b',
                           opacity: pressed ? 0.7 : 1,
-                          borderLeftColor: hasStarted ? colors.success : colors.border,
+                          borderLeftColor: isOngoing ? colors.success : colors.border,
                           borderLeftWidth: 4,
                         }
                       ]}
                       onPress={() => {
-                        if (hasStarted) {
+                        if (isOngoing) {
                           startScanner(event);
-                        } else {
+                        } else if (!hasStarted) {
                           Alert.alert("Event Not Started", "This event has not started yet. You can mark attendance once it begins.");
+                        } else {
+                          Alert.alert("Event Ended", "This event has already ended. Attendance scanning is no longer allowed.");
                         }
                       }}
                     >
@@ -430,17 +441,17 @@ export default function HomeScreen() {
                         <View style={styles.eventItemMeta}>
                           <Calendar size={14} color={colors.textMuted} />
                           <Text style={[styles.eventItemDate, { color: colors.textMuted }]}>
-                            {formatDate(eventDate)}
+                            {formatDate(eventStartDate)}
                           </Text>
                           <View style={{ width: 10 }} />
                           <Clock size={14} color={colors.textMuted} />
                           <Text style={[styles.eventItemDate, { color: colors.textMuted }]}>
-                            {formatTime12h(eventDate)}
+                            {formatTime12h(eventStartDate)}
                           </Text>
                         </View>
                       </View>
                       
-                      {hasStarted ? (
+                      {isOngoing ? (
                         <View style={[styles.statusBadge, { backgroundColor: colors.success + '15' }]}>
                           <Text style={[styles.statusBadgeText, { color: colors.success }]}>Ongoing</Text>
                         </View>
