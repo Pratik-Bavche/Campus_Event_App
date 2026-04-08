@@ -557,7 +557,7 @@ export const profileService = {
         const arrayBuffer = await response.arrayBuffer();
 
         const { error: uploadError } = await supabase.storage
-            .from('avatars')
+            .from('profiles')
             .upload(filePath, arrayBuffer, {
                 contentType: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
                 upsert: true
@@ -566,13 +566,13 @@ export const profileService = {
         if (uploadError) {
             console.error('Upload Error Details:', uploadError);
             if (uploadError.message.includes('row-level security') || uploadError.message.includes('new row violates')) {
-                throw new Error('Permission Denied: Please enable "INSERT" policies for the "avatars" bucket in your Supabase Dashboard to allow uploads.');
+                throw new Error('Permission Denied: Please enable "INSERT" and "UPDATE" policies for the "profiles" bucket in your Supabase Dashboard to allow uploads.');
             }
             throw uploadError;
         }
 
         const { data } = supabase.storage
-            .from('avatars')
+            .from('profiles')
             .getPublicUrl(filePath);
 
         // Update student profile with new avatar URL

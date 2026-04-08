@@ -131,6 +131,8 @@ export default function HomeScreen() {
       return !isPastDeadline && e.status === "Open";
     });
 
+    const upcomingExist = filtered.length > 0;
+
     if (selectedCategory !== "All") {
       filtered = filtered.filter((e) => {
         if (selectedCategory === "Technical")
@@ -163,8 +165,16 @@ export default function HomeScreen() {
       });
     }
 
+    // Fallback to recent closed events if no upcoming events match and we are in "All" category
+    if (filtered.length === 0 && selectedCategory === "All" && !upcomingExist) {
+        filtered = events
+        .filter(e => e.status === "Closed" || (e.deadline && new Date(e.deadline).getTime() <= now.getTime()))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 2);
+    }
+
     setFilteredEvents(filtered);
-  }, [events, selectedCategory]);
+  }, [events, selectedCategory, now]);
 
   const handleScanAttendance = async () => {
     if (isAttendanceMarked) {
@@ -256,13 +266,20 @@ export default function HomeScreen() {
     return isPastDeadline;
   }).length;
 
-  const popularEvents = events
+  const openEventsForPopular = events
     .filter(e => {
       const isPastDeadline = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
       return !isPastDeadline && e.status === "Open";
-    })
-    .sort((a, b) => (b.registeredCount || 0) - (a.registeredCount || 0))
-    .slice(0, 3);
+    });
+
+  const popularEvents = openEventsForPopular.length > 0
+    ? [...openEventsForPopular]
+        .sort((a, b) => (b.registeredCount || 0) - (a.registeredCount || 0))
+        .slice(0, 3)
+    : events
+        .filter(e => e.status === "Closed" || (e.deadline && new Date(e.deadline).getTime() <= now.getTime()))
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 2);
   const categories = [
     "All",
     "Today",
@@ -656,7 +673,7 @@ export default function HomeScreen() {
         {/* Popular Events */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Popular Events
+            {activeCount > 0 ? "Popular Events" : "Recent Events"}
           </Text>
           <Pressable
             onPress={() => router.push("/(tabs)/events")}
@@ -693,10 +710,12 @@ export default function HomeScreen() {
                 <View
                   style={[
                     styles.statusTag,
-                    { backgroundColor: colors.secondary },
+                    { backgroundColor: item.status === 'Open' ? colors.secondary : colors.textMuted + '40' },
                   ]}
                 >
-                  <Text style={styles.statusTagText}>Soon</Text>
+                  <Text style={[styles.statusTagText, { color: item.status === 'Open' ? '#fff' : colors.textMuted }]}>
+                    {item.status === 'Open' ? "Soon" : "Closed"}
+                  </Text>
                 </View>
               </View>
             </Pressable>
@@ -706,7 +725,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Upcoming Deadlines
+              {activeCount > 0 ? "Upcoming Deadlines" : "Past Events"}
             </Text>
             <Pressable
               onPress={() => router.push("/(tabs)/events")}
@@ -726,8 +745,8 @@ export default function HomeScreen() {
                   <Text style={[styles.deadlineName, { color: colors.text }]}>
                     {event.name}
                   </Text>
-                  <Text style={[styles.deadlineDate, { color: colors.error }]}>
-                    Event Open
+                  <Text style={[styles.deadlineDate, { color: event.status === 'Open' ? colors.error : colors.textMuted }]}>
+                    {event.status === 'Open' ? "Event Open" : "Event Closed"}
                   </Text>
                 </View>
                 <ChevronRight size={20} color={colors.textMuted} />

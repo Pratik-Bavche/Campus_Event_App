@@ -225,7 +225,7 @@ export default function ProfileScreen() {
         console.error(error);
         Alert.alert(
           "Error",
-          'Failed to upload image. Make sure an "avatars" bucket exists in Supabase Storage and is public.',
+          'Failed to upload image. Make sure a "profiles" bucket exists in Supabase Storage and is public.',
         );
       }
     }
@@ -713,11 +713,11 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
   editableInput: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
     borderBottomWidth: 1,
     paddingVertical: 4,
     paddingHorizontal: 0,
@@ -819,7 +819,7 @@ const styles = StyleSheet.create({
   },
   yearChipText: {
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
   certificateCard: {
     borderRadius: 22,
