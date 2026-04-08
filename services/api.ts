@@ -31,6 +31,13 @@ const handleApiError = (error: any, context: string) => {
     }
 
 
+    // 2. Check for database constraints
+    if (error?.code === '23514' || message.includes('students_mobile_number_india_check')) {
+        const errorMsg = 'Please enter a valid Indian mobile number (e.g., 9876543210 or +919012345678).';
+        console.log(`${context}: ${errorMsg}`);
+        throw new Error(errorMsg);
+    }
+
     if (message.toLowerCase().includes('network error') || message.toLowerCase().includes('failed to fetch')) {
         const errorMsg = 'Connection error. Please check your internet connection.';
         console.warn(`${context}: ${errorMsg}`);

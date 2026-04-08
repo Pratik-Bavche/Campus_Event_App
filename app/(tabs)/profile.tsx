@@ -191,8 +191,8 @@ export default function ProfileScreen() {
       await updateUser(updates as Partial<User>);
       setIsEditing(false);
       Alert.alert("Success", "Profile updated successfully");
-    } catch (error) {
-      Alert.alert("Error", "Failed to update profile");
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to update profile");
     }
   };
 
