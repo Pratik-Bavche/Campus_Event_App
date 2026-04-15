@@ -315,9 +315,7 @@ export default function EventDetailsScreen() {
             {registrationError}
           </Text>
         )}
-        {isRegistered && isEventCompleted ? (
-          <Button title="Download Certificate" onPress={handleDownloadCertificate} style={{ ...styles.registerButton, backgroundColor: "#10b981", height: isTablet ? 64 : 56 }} icon={<Award size={20} color="#fff" />} />
-        ) : isRegistered ? (
+        {isRegistered ? (
           <Button title="Already Registered" disabled={true} onPress={() => { }} style={{ ...styles.registerButton, opacity: 0.7, height: isTablet ? 64 : 56 }} />
         ) : isDeadlinePassed ? (
           <Button title="Registration Closed" disabled={true} onPress={() => { }} style={{ ...styles.registerButton, opacity: 0.7, height: isTablet ? 64 : 56 }} />

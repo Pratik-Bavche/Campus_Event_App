@@ -756,8 +756,8 @@ export default function HomeScreen() {
                   <Text style={[styles.deadlineName, { color: colors.text }]}>
                     {event.name}
                   </Text>
-                  <Text style={[styles.deadlineDate, { color: event.status === 'Open' ? colors.error : colors.textMuted }]}>
-                    {event.status === 'Open' ? "Event Open" : "Event Closed"}
+                  <Text style={[styles.deadlineDate, { color: (event.status === 'Open' && (!event.deadline || new Date(event.deadline).getTime() > now.getTime())) ? colors.error : colors.textMuted }]}>
+                    {(event.status === 'Open' && (!event.deadline || new Date(event.deadline).getTime() > now.getTime())) ? "Event Open" : "Event Closed"}
                   </Text>
                 </View>
                 <ChevronRight size={20} color={colors.textMuted} />

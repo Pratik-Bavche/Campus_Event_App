@@ -64,7 +64,7 @@ export default function RegistrationsScreen() {
     const deadlineStr = reg.event?.deadline;
     const isPastDeadline = deadlineStr ? new Date(deadlineStr).getTime() <= now.getTime() : false;
 
-    if (selectedTab === "All") return reg.status !== "CANCELLED" && !isPastDeadline;
+    if (selectedTab === "All") return reg.status !== "CANCELLED";
 
     if (selectedTab === "Completed") {
       return reg.event && isPastDeadline && reg.status !== "CANCELLED";
@@ -210,31 +210,7 @@ export default function RegistrationsScreen() {
                       View Details
                     </Text>
                   </Pressable>
-                  {isCompleted && !isCancelled && (
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.actionButton,
-                        { backgroundColor: "#10b98115" },
-                        { transform: [{ scale: pressed ? 0.98 : 1 }] },
-                      ]}
-                      onPress={() => handleDownloadCertificate(item.event?.name || 'Event')}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <Award size={14} color="#10b981" />
-                        <Text
-                          style={[styles.actionButtonText, { color: "#10b981" }]}
-                        >
-                          Certificate
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
+
                 </View>
 
                 {isCompleted && !isCancelled && (

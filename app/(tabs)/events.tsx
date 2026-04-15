@@ -73,7 +73,7 @@ export default function EventsScreen() {
 
     filtered = filtered.filter((e) => {
       const isDeadlinePassed = e.deadline ? new Date(e.deadline).getTime() <= now.getTime() : false;
-      if (selectedStatus === "All") return !isDeadlinePassed && e.status !== "Closed";
+      if (selectedStatus === "All") return true;
       if (selectedStatus === "Open") return e.status === "Open" && !isDeadlinePassed;
       if (selectedStatus === "Closed") return e.status === "Closed" || isDeadlinePassed;
       return true;
