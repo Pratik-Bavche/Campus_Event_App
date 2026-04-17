@@ -9,6 +9,16 @@
 **Campus Event App** is a state-of-the-art, production-ready mobile ecosystem designed to bridge the gap between college event organizers and students. Built with a "Mobile-First" philosophy, it streamlines event discovery, registration, and attendance management using modern cloud infrastructure.
 
 ---
+
+## 📱 Download Application
+
+Get the latest version of the app for your Android device:
+
+| **Direct Download** | **Scan to Download (QR)** |
+| :--- | :--- |
+| [📥 Download APK (v1.0.0)](https://expo.dev/accounts/pratikbavche/projects/campus-event-app/builds/fd502b74-70ca-405e-ae9c-2f80d25e77ea) | ![QR Code](https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://expo.dev/accounts/pratikbavche/projects/campus-event-app/builds/fd502b74-70ca-405e-ae9c-2f80d25e77ea) |
+
+---
  
 ## 🚀 Vision & Problem Solving
 
