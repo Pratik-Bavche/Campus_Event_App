@@ -94,10 +94,11 @@ export default function RootLayout() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const onWelcomeScreen = segments[0] === "welcome";
 
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace("/login");
-    } else if (isAuthenticated && inAuthGroup) {
+    if (!isAuthenticated && !inAuthGroup && !onWelcomeScreen) {
+      router.replace("/welcome");
+    } else if (isAuthenticated && (inAuthGroup || onWelcomeScreen)) {
       router.replace("/(tabs)");
     }
   }, [isAuthenticated, segments, isLoading]);
@@ -120,6 +121,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="event/[id]" options={{ presentation: "card" }} />
