@@ -4,18 +4,28 @@ import React from 'react';
 import { Platform, Pressable, useColorScheme, useWindowDimensions } from 'react-native';
 import { Colors } from '../../constants/theme';
 
+import Animated, { FadeInDown } from 'react-native-reanimated';
+
 const TabButton = (props: any) => {
+  const { index = 0 } = props;
+  
   return (
-    <Pressable
-      {...props}
-      style={({ pressed }) => [
-        props.style,
-        {
-          transform: [{ scale: pressed ? 0.9 : 1 }],
-          opacity: pressed ? 0.8 : 1,
-        },
-      ]}
-    />
+    <Animated.View 
+      entering={FadeInDown.delay(100 * index).springify().damping(12)}
+      style={{ flex: 1 }}
+    >
+      <Pressable
+        {...props}
+        style={({ pressed }) => [
+          props.style,
+          {
+            transform: [{ scale: pressed ? 0.9 : 1 }],
+            opacity: pressed ? 0.8 : 1,
+            flex: 1,
+          },
+        ]}
+      />
+    </Animated.View>
   );
 };
 
@@ -31,7 +41,6 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.tabIconDefault,
-        tabBarButton: (props) => <TabButton {...props} />,
         tabBarStyle: {
           backgroundColor: theme === 'dark' ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
           borderTopColor: colors.border,
@@ -71,6 +80,7 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => <Home size={isTablet ? 28 : 24} color={color} />,
+          tabBarButton: (props) => <TabButton {...props} index={0} />,
         }}
       />
       <Tabs.Screen
@@ -78,6 +88,7 @@ export default function TabLayout() {
         options={{
           title: 'Events',
           tabBarIcon: ({ color, size }) => <Calendar size={isTablet ? 28 : 24} color={color} />,
+          tabBarButton: (props) => <TabButton {...props} index={1} />,
         }}
       />
       <Tabs.Screen
@@ -85,6 +96,7 @@ export default function TabLayout() {
         options={{
           title: 'Registered',
           tabBarIcon: ({ color, size }) => <Bookmark size={isTablet ? 28 : 24} color={color} />,
+          tabBarButton: (props) => <TabButton {...props} index={2} />,
         }}
       />
       <Tabs.Screen
@@ -92,6 +104,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => <User size={isTablet ? 28 : 24} color={color} />,
+          tabBarButton: (props) => <TabButton {...props} index={3} />,
         }}
       />
     </Tabs>
