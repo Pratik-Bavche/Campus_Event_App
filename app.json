@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "App",
-    "slug": "App",
+    "slug": "campus-event-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -46,6 +46,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "896e4c8d-ba1d-41a7-b4d2-44676964e372"
+      }
+    },
+    "owner": "pratikbavche"
   }
 }
