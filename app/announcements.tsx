@@ -50,10 +50,10 @@ export default function AnnouncementsScreen() {
       style={[
         styles.announcementCard,
         {
-          backgroundColor: "#fff7ed",
-          borderColor: "#fdba74",
+          backgroundColor: colors.announcementCardBg,
+          borderColor: colors.announcementCardBorder,
           borderLeftWidth: 4,
-          borderLeftColor: "#f97316",
+          borderLeftColor: colors.announcementAccent,
         },
       ]}
     >
@@ -61,7 +61,7 @@ export default function AnnouncementsScreen() {
         style={[
           styles.announcementIcon,
           {
-            backgroundColor: "#f97316",
+            backgroundColor: colors.announcementAccent,
           },
         ]}
       >

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     StyleSheet,
     Text,
@@ -36,6 +36,16 @@ export const Input: React.FC<InputProps> = ({
 }) => {
     const theme = useColorScheme() ?? 'light';
     const colors = Colors[theme];
+    const [isFocused, setIsFocused] = useState(false);
+
+    // Dark mode border: subtle at rest, slightly brighter on focus.
+    // Light mode: keep transparent (the gray fill is the visual separator).
+    const darkBorderColor = isFocused ? '#64748b' : '#475569';
+    const borderColor = error
+        ? colors.error
+        : theme === 'dark'
+            ? darkBorderColor
+            : 'transparent';
 
     return (
         <View style={[styles.container, containerStyle]}>
@@ -43,8 +53,8 @@ export const Input: React.FC<InputProps> = ({
             <View style={[
                 styles.inputContainer,
                 {
-                    backgroundColor: theme === 'light' ? '#f3f4f6' : '#1e293b',
-                    borderColor: error ? colors.error : 'transparent'
+                    backgroundColor: theme === 'light' ? colors.border : colors.card,
+                    borderColor,
                 }
             ]}>
                 {icon && <View style={styles.iconContainer}>{icon}</View>}
@@ -56,6 +66,8 @@ export const Input: React.FC<InputProps> = ({
                     secureTextEntry={secureTextEntry}
                     keyboardType={keyboardType}
                     autoCapitalize={autoCapitalize}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
                     style={[styles.input, { color: colors.text }]}
                 />
             </View>

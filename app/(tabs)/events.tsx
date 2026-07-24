@@ -232,7 +232,7 @@ export default function EventsScreen() {
           ))}
         </ScrollView>
 
-        <View style={styles.statusFilters}>
+        <View style={[styles.statusFilters, { borderTopColor: colors.border }]}>
           {statuses.map((stat) => (
             <Pressable
               key={stat}
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
+    borderTopColor: "transparent", // Border driven by theme via inline style
   },
   statusTab: {
     paddingVertical: 8,

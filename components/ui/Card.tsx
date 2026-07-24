@@ -25,7 +25,7 @@ export const Card: React.FC<CardProps> = ({ children, style, onPress }) => {
             styles.card,
             {
                 backgroundColor: colors.card,
-                borderColor: colors.border
+                borderColor: theme === 'dark' ? 'rgba(255,255,255,0.15)' : colors.border,
             },
             style
         ]}>

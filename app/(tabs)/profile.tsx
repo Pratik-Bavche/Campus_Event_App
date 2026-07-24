@@ -296,7 +296,7 @@ export default function ProfileScreen() {
           {/* Profile Card */}
           <View style={[styles.profileCard, { backgroundColor: colors.card, padding: isTablet ? 32 : 24, paddingTop: 0 }]}>
             <View style={styles.avatarWrapper}>
-              <Pressable onPress={handleImagePick} style={styles.avatarShadow}>
+              <Pressable onPress={handleImagePick} style={[styles.avatarShadow, { backgroundColor: colors.avatarShadowBg }]}>
                 <Image
                   source={{
                     uri: user?.profile_image && user.profile_image.length > 0
@@ -543,14 +543,14 @@ export default function ProfileScreen() {
                           style={({ pressed }) => [
                             styles.certificateItem,
                             { 
-                              backgroundColor: theme === 'light' ? '#f8fafc' : '#1e293b',
+                              backgroundColor: colors.cardAlt,
                               opacity: pressed ? 0.7 : 1,
                               transform: [{ scale: pressed ? 0.98 : 1 }]
                             }
                           ]}
                           onPress={() => Linking.openURL(cert.certificate_url)}
                         >
-                          <View style={styles.certIconContainer}>
+                          <View style={[styles.certIconContainer, { backgroundColor: colors.gridItemBg }]}>
                             <Image 
                               source={{ uri: 'https://cdn-icons-png.flaticon.com/512/2912/2912761.png' }} 
                               style={styles.certIcon}
@@ -580,7 +580,7 @@ export default function ProfileScreen() {
               <Pressable
                 style={({ pressed }) => [
                   styles.logoutButton,
-                  { backgroundColor: theme === "light" ? "#fef2f2" : "#450a0a" },
+                  { backgroundColor: colors.logoutBg },
                   { transform: [{ scale: pressed ? 0.98 : 1 }] },
                   pressed && { opacity: 0.8 },
                 ]}
@@ -674,7 +674,6 @@ const styles = StyleSheet.create({
   avatarShadow: {
     padding: 4,
     borderRadius: 50,
-    backgroundColor: "#fff",
     elevation: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -861,7 +860,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',

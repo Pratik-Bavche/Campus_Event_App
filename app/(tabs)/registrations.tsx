@@ -299,7 +299,7 @@ export default function RegistrationsScreen() {
               styles.tab,
               {
                 backgroundColor:
-                  selectedTab === tab ? "rgba(0,0,0,0.08)" : "rgba(0,0,0,0.03)",
+                  selectedTab === tab ? colors.border : colors.gridItemBg,
                 paddingVertical: isTablet ? 14 : 10,
               },
               { transform: [{ scale: pressed ? 0.95 : 1 }] },

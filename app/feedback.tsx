@@ -197,7 +197,7 @@ export default function FeedbackScreen() {
                             </View>
                         </View>
 
-                        <View style={styles.divider} />
+                        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
                         {alreadySubmitted ? (
                             <View style={styles.alreadySubmittedContainer}>
@@ -337,7 +337,6 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 1,
-        backgroundColor: "rgba(0,0,0,0.1)",
         marginVertical: 20,
     },
     inputLabel: {

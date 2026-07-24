@@ -207,7 +207,7 @@ export default function EventDetailsScreen() {
       >
         <View style={[styles.content, { backgroundColor: colors.background, paddingHorizontal: isTablet ? 60 : 24 }]}>
           <View style={[styles.statsGrid, { marginBottom: isTablet ? 32 : 24, gap: isTablet ? 20 : 12 }]}>
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.gridItemBg }]}>
               <View style={styles.gridIconHeader}>
                 <Calendar size={20} color={colors.primary} />
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>Date</Text>
@@ -216,7 +216,7 @@ export default function EventDetailsScreen() {
                 {formatDate(event.date)}
               </Text>
             </View>
-            <View style={styles.gridItem}>
+            <View style={[styles.gridItem, { backgroundColor: colors.gridItemBg }]}>
               <View style={styles.gridIconHeader}>
                 <Clock size={20} color={colors.primary} />
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>Time</Text>
@@ -226,7 +226,7 @@ export default function EventDetailsScreen() {
               </Text>
             </View>
             {isTablet && (
-              <View style={styles.gridItem}>
+              <View style={[styles.gridItem, { backgroundColor: colors.gridItemBg }]}>
                 <View style={styles.gridIconHeader}>
                   <MapPin size={20} color={colors.primary} />
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>Venue</Text>
@@ -237,7 +237,7 @@ export default function EventDetailsScreen() {
               </View>
             )}
             {isTablet && (
-              <View style={styles.gridItem}>
+              <View style={[styles.gridItem, { backgroundColor: colors.gridItemBg }]}>
                 <View style={styles.gridIconHeader}>
                   <Users size={20} color={colors.primary} />
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>Type</Text>
@@ -251,7 +251,7 @@ export default function EventDetailsScreen() {
 
           {!isTablet && (
             <View style={[styles.statsGrid, { gap: 12 }]}>
-              <View style={styles.gridItem}>
+              <View style={[styles.gridItem, { backgroundColor: colors.gridItemBg }]}>
                 <View style={styles.gridIconHeader}>
                   <MapPin size={20} color={colors.primary} />
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>Venue</Text>
@@ -260,7 +260,7 @@ export default function EventDetailsScreen() {
                   {event.venue}
                 </Text>
               </View>
-              <View style={styles.gridItem}>
+              <View style={[styles.gridItem, { backgroundColor: colors.gridItemBg }]}>
                 <View style={styles.gridIconHeader}>
                   <Users size={20} color={colors.primary} />
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>Type</Text>
@@ -299,7 +299,7 @@ export default function EventDetailsScreen() {
             </Card>
           </View>
 
-          <View style={styles.deadlineInfo}>
+          <View style={[styles.deadlineInfo, { backgroundColor: colors.deadlineBg }]}>
             <Info size={16} color={isDeadlinePassed ? colors.error : colors.accent} />
             <Text style={[styles.deadlineText, { color: isDeadlinePassed ? colors.error : colors.accent }]}>
               {isDeadlinePassed ? "Registration closed" : `Register before ${formatDate(event.deadline)}`}
@@ -309,7 +309,7 @@ export default function EventDetailsScreen() {
         <View style={{ height: 120 }} />
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: colors.background, paddingHorizontal: isTablet ? 60 : 20, paddingBottom: Platform.OS === "ios" ? 40 : 20 }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.footerBorder, paddingHorizontal: isTablet ? 60 : 20, paddingBottom: Platform.OS === "ios" ? 40 : 20 }]}>
         {registrationError && (
           <Text style={[styles.errorMessage, { color: colors.error, marginBottom: 12 }]}>
             {registrationError}
@@ -411,7 +411,6 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.03)",
     padding: 16,
     borderRadius: 16,
   },
@@ -474,7 +473,6 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: "rgba(0,0,0,0.02)",
   },
   deadlineText: {
     fontSize: 14,
@@ -518,7 +516,6 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
   },
   registerButton: {
   },

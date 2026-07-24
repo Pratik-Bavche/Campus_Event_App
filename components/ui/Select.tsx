@@ -61,8 +61,12 @@ export const Select: React.FC<SelectProps> = ({
                 style={[
                     styles.selectContainer,
                     {
-                        backgroundColor: theme === 'light' ? '#f3f4f6' : '#1e293b',
-                        borderColor: error ? colors.error : 'transparent'
+                        backgroundColor: theme === 'light' ? colors.border : colors.card,
+                        borderColor: error
+                            ? colors.error
+                            : theme === 'dark'
+                                ? 'rgba(255,255,255,0.12)'
+                                : 'transparent',
                     }
                 ]}
             >
@@ -94,7 +98,7 @@ export const Select: React.FC<SelectProps> = ({
                         styles.modalContent,
                         { backgroundColor: colors.card, shadowColor: colors.text }
                     ]}>
-                        <View style={styles.modalHeader}>
+                        <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>Select {label}</Text>
                             <TouchableOpacity onPress={() => setIsVisible(false)}>
                                 <X size={24} color={colors.textMuted} />
@@ -196,7 +200,6 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         paddingBottom: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
     },
     modalTitle: {
         fontSize: 18,

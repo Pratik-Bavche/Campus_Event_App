@@ -128,7 +128,7 @@ export default function RegistrationFlow() {
         >
             <Stack.Screen options={{ headerShown: false }} />
 
-            <View style={styles.topHeader}>
+            <View style={[styles.topHeader, { backgroundColor: colors.primary }]}>
                 <Pressable onPress={() => router.back()} style={styles.backButtonIcon}>
                     <ArrowLeft color="#fff" size={24} />
                 </Pressable>
@@ -281,7 +281,6 @@ const styles = StyleSheet.create({
         paddingTop: 16,
     },
     topHeader: {
-        backgroundColor: '#3b82f6',
         paddingTop: Platform.OS === 'ios' ? 60 : 70, // Margin from top
         paddingBottom: 20,
         paddingHorizontal: 16,

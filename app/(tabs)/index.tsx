@@ -420,7 +420,7 @@ export default function HomeScreen() {
                       style={({ pressed }) => [
                         styles.eventItem,
                         { 
-                          backgroundColor: theme === 'light' ? '#f8fafc' : '#1e293b',
+                          backgroundColor: colors.cardAlt,
                           opacity: pressed ? 0.7 : 1,
                           borderLeftColor: isOngoing ? colors.success : colors.border,
                           borderLeftWidth: 4,
@@ -595,10 +595,10 @@ export default function HomeScreen() {
                     style={[
                       styles.announcementCarouselCard,
                       {
-                        backgroundColor: "#fff7ed",
-                        borderColor: "#fdba74",
+                        backgroundColor: colors.announcementCardBg,
+                        borderColor: colors.announcementCardBorder,
                         borderLeftWidth: 4,
-                        borderLeftColor: "#f97316",
+                        borderLeftColor: colors.announcementAccent,
                       },
                     ]}
                   >
@@ -606,7 +606,7 @@ export default function HomeScreen() {
                       style={[
                         styles.announcementIcon,
                         {
-                          backgroundColor: "#f97316",
+                          backgroundColor: colors.announcementAccent,
                         },
                       ]}
                     >
@@ -714,9 +714,9 @@ export default function HomeScreen() {
                 source={{ uri: item.poster || 'https://via.placeholder.com/400x200' }}
                 style={styles.featuredImage}
               />
-              <View style={styles.badgeContainer}>
+              <View style={[styles.badgeContainer]}>
                 <View style={styles.categoryBadge}>
-                  <Text style={styles.badgeText}>Technical</Text>
+                  <Text style={[styles.badgeText, { color: '#334155' }]}>Technical</Text>
                 </View>
                 <View
                   style={[
@@ -972,7 +972,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: "bold",
-    color: "#334155",
   },
   statusTag: {
     paddingHorizontal: 12,
