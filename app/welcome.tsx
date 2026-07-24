@@ -12,23 +12,36 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, { 
-  FadeIn, 
-  FadeInDown, 
-  FadeInUp 
+import Animated, {
+  FadeIn,
+  FadeInDown,
 } from 'react-native-reanimated';
+
+// React Compiler (enabled in app.json) interferes with the useMemo dependency
+// tracking inside expo-video's useReleasingSharedObject, causing it to release
+// the player while VideoView's native SurfaceVideoView still holds a reference.
+// This directive opts this file out of React Compiler transforms entirely.
+'use no memo';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('screen');
 
+// Keep videoSource outside the component so its reference is stable.
+// useVideoPlayer calls parseSource() on every render which creates a new object,
+// but JSON.stringify on a stable require() reference stays equal, preventing
+// spurious player re-creation.
 const videoSource = require('../assets/dypcoe1.mp4');
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
-  const player = useVideoPlayer(videoSource, (player) => {
-    player.loop = true;
-    player.play();
-    player.muted = true;
+  // useVideoPlayer internally uses useReleasingSharedObject which calls
+  // player.release() when its useMemo deps change. With React Compiler disabled
+  // (via 'use no memo' above), deps are compared correctly and the player is
+  // never released while still attached to VideoView.
+  const player = useVideoPlayer(videoSource, (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
   });
 
   const handleGetStarted = () => {
@@ -39,8 +52,8 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
-      {/* Background Video using expo-video */}
+
+      {/* Background Video */}
       <VideoView
         player={player}
         style={styles.backgroundVideo}
@@ -84,7 +97,7 @@ export default function WelcomeScreen() {
               </TouchableOpacity>
             </Animated.View>
 
-            <Animated.Text 
+            <Animated.Text
               entering={FadeIn.delay(1200).duration(1000)}
               style={styles.footerText}
             >
